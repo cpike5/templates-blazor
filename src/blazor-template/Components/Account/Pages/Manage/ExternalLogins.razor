@@ -15,56 +15,536 @@
 
 <PageTitle>Manage your external logins</PageTitle>
 
+<style>
+    .external-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .external-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .external-info h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .external-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .login-sections {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .login-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+        .login-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(120, 39, 137, 0.1);
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .provider-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .provider-card {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+        .provider-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .provider-card.connected {
+            border-color: var(--color-success);
+            background: linear-gradient(135deg, #f8fff8, #f0fff0);
+        }
+
+        .provider-card.available {
+            border-color: #dee2e6;
+            background: #f8f9fa;
+        }
+
+    .provider-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+        .provider-icon.google {
+            background: #4285f4;
+        }
+
+        .provider-icon.microsoft {
+            background: #00a1f1;
+        }
+
+        .provider-icon.github {
+            background: #333;
+        }
+
+        .provider-icon.facebook {
+            background: #1877f2;
+        }
+
+        .provider-icon.twitter {
+            background: #1da1f2;
+        }
+
+        .provider-icon.linkedin {
+            background: #0077b5;
+        }
+
+        .provider-icon.apple {
+            background: #000;
+        }
+
+    .provider-info {
+        flex: 1;
+    }
+
+    .provider-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0 0 0.25rem 0;
+    }
+
+    .provider-status {
+        font-size: 0.875rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .status-badge.connected {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .status-badge.available {
+            background: #6c757d;
+            color: white;
+        }
+
+    .provider-actions {
+        margin-left: 1rem;
+    }
+
+    .btn-provider {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid;
+        min-width: 100px;
+    }
+
+    .btn-connect {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+    }
+
+        .btn-connect:hover {
+            background: var(--color-secondary);
+            border-color: var(--color-secondary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+    .btn-remove {
+        background: transparent;
+        border-color: var(--color-danger);
+        color: var(--color-danger);
+    }
+
+        .btn-remove:hover {
+            background: var(--color-danger);
+            border-color: var(--color-danger);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-remove:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .info-card {
+        background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+        border: 2px solid #bee5eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-icon {
+        color: #0c5460;
+        font-size: 1.25rem;
+    }
+
+    .info-title {
+        font-weight: 600;
+        color: #0c5460;
+        margin: 0;
+    }
+
+    .info-content {
+        color: #0c5460;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .info-list {
+        margin: 0.5rem 0 0 1.5rem;
+        padding: 0;
+    }
+
+        .info-list li {
+            margin-bottom: 0.5rem;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--color-dark);
+    }
+
+    .empty-description {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .external-header
+
+    {
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .login-section {
+        padding: 1.5rem;
+    }
+
+    .provider-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .provider-icon {
+        margin-right: 0;
+    }
+
+    .provider-actions {
+        margin-left: 0;
+    }
+
+    .btn-provider {
+        width: 100%;
+    }
+
+    }
+
+    /* Loading states */
+    .loading-button {
+        position: relative;
+        overflow: hidden;
+    }
+
+        .loading-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: loading-shimmer 1.5s infinite;
+        }
+
+    @@keyframes loading-shimmer {
+        0%
+
+    {
+        left: -100%;
+    }
+
+    100% {
+        left: 100%;
+    }
+
+    }
+</style>
+
+<!-- Page Header -->
+<div class="external-header">
+    <div class="external-icon">
+        <i class="fas fa-link"></i>
+    </div>
+    <div class="external-info">
+        <h2>External Logins</h2>
+        <p>Connect your account with external login providers for easier access</p>
+    </div>
+</div>
+
+<!-- Status Message -->
 <StatusMessage />
-@if (currentLogins?.Count > 0)
-{
-    <h3>Registered Logins</h3>
-    <table class="table">
-        <tbody>
-            @foreach (var login in currentLogins)
-            {
-                <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
-                        @if (showRemoveButton)
-                        {
-                            <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <div>
+
+<div class="login-sections">
+    @if (currentLogins?.Count > 0)
+    {
+        <!-- Connected Logins Section -->
+        <div class="login-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Connected Accounts</h3>
+                    <p class="section-description">External accounts currently linked to your profile</p>
+                </div>
+            </div>
+
+            <div class="provider-grid">
+                @foreach (var login in currentLogins)
+                {
+                    <div class="provider-card connected">
+                        <div class="provider-icon @GetProviderClass(login.LoginProvider)">
+                            <i class="@GetProviderIcon(login.LoginProvider)"></i>
+                        </div>
+                        <div class="provider-info">
+                            <h4 class="provider-name">@login.ProviderDisplayName</h4>
+                            <div class="provider-status">
+                                <span class="status-badge connected">Connected</span>
+                                <span>• Linked to your account</span>
+                            </div>
+                        </div>
+                        <div class="provider-actions">
+                            @if (showRemoveButton)
+                            {
+                                <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
+                                    <AntiforgeryToken />
                                     <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
                                     <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-@if (otherLogins?.Count > 0)
-{
-    <h4>Add another service to log in.</h4>
-    <hr />
-    <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
-        <AntiforgeryToken />
-        <div>
-            <p>
-                @foreach (var provider in otherLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
-                        @provider.DisplayName
-                    </button>
+                                    <button type="submit" class="btn btn-provider btn-remove" title="Remove this @login.ProviderDisplayName login from your account">
+                                        <i class="fas fa-times me-1"></i>
+                                        Remove
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button class="btn btn-provider btn-remove" disabled title="Cannot remove your only login method">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Required
+                                </button>
+                            }
+                        </div>
+                    </div>
                 }
-            </p>
+            </div>
+
+            @if (!showRemoveButton)
+            {
+                <div class="info-card">
+                    <div class="info-header">
+                        <i class="fas fa-info-circle info-icon"></i>
+                        <h4 class="info-title">Cannot Remove Login</h4>
+                    </div>
+                    <p class="info-content">
+                        You cannot remove your external login because you don't have a local password set.
+                        To remove external logins, first <a href="Account/Manage/SetPassword">set a password</a>
+                        for your account.
+                    </p>
+                </div>
+            }
         </div>
-    </form>
-}
+    }
+
+    @if (otherLogins?.Count > 0)
+    {
+        <!-- Available Logins Section -->
+        <div class="login-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Add Another Service</h3>
+                    <p class="section-description">Connect additional external accounts to your profile</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-shield-alt info-icon"></i>
+                    <h4 class="info-title">Benefits of External Logins</h4>
+                </div>
+                <p class="info-content">Connecting external accounts provides several advantages:</p>
+                <ul class="info-list">
+                    <li>Faster sign-in without remembering passwords</li>
+                    <li>Enhanced security through provider authentication</li>
+                    <li>Backup access methods if you lose your password</li>
+                    <li>Streamlined account recovery options</li>
+                </ul>
+            </div>
+
+            <div class="provider-grid">
+                <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
+                    <AntiforgeryToken />
+                    @foreach (var provider in otherLogins)
+                    {
+                        <div class="provider-card available">
+                            <div class="provider-icon @GetProviderClass(provider.Name)">
+                                <i class="@GetProviderIcon(provider.Name)"></i>
+                            </div>
+                            <div class="provider-info">
+                                <h4 class="provider-name">@provider.DisplayName</h4>
+                                <div class="provider-status">
+                                    <span class="status-badge available">Available</span>
+                                    <span>• Ready to connect</span>
+                                </div>
+                            </div>
+                            <div class="provider-actions">
+                                <button type="submit" class="btn btn-provider btn-connect" name="Provider" value="@provider.Name" title="Connect your @provider.DisplayName account">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Connect
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+    }
+
+    @if ((currentLogins?.Count ?? 0) == 0 && (otherLogins?.Count ?? 0) == 0)
+    {
+        <!-- Empty State -->
+        <div class="login-section">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <h3 class="empty-title">No External Login Providers</h3>
+                <p class="empty-description">
+                    There are no external authentication services configured.
+                    See <a href="https://go.microsoft.com/fwlink/?LinkID=532715" target="_blank">this article</a>
+                    about setting up this ASP.NET application to support logging in via external services.
+                </p>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
     public const string LinkLoginCallbackAction = "LinkLoginCallback";
@@ -117,7 +597,7 @@
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("The external login was removed.", HttpContext);
+        RedirectManager.RedirectToCurrentPageWithStatus("The external login was removed successfully.", HttpContext);
     }
 
     private async Task OnGetLinkLoginCallbackAsync()
@@ -138,6 +618,32 @@
         // Clear the existing external cookie to ensure a clean login process
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-        RedirectManager.RedirectToCurrentPageWithStatus("The external login was added.", HttpContext);
+        RedirectManager.RedirectToCurrentPageWithStatus("The external login was added successfully.", HttpContext);
     }
+
+    private string GetProviderIcon(string provider) =>
+        provider.ToLower() switch
+        {
+            "google" => "fab fa-google",
+            "microsoft" => "fab fa-microsoft",
+            "github" => "fab fa-github",
+            "facebook" => "fab fa-facebook",
+            "twitter" => "fab fa-twitter",
+            "linkedin" => "fab fa-linkedin",
+            "apple" => "fab fa-apple",
+            _ => "fas fa-user-circle"
+        };
+
+    private string GetProviderClass(string provider) =>
+        provider.ToLower() switch
+        {
+            "google" => "google",
+            "microsoft" => "microsoft",
+            "github" => "github",
+            "facebook" => "facebook",
+            "twitter" => "twitter",
+            "linkedin" => "linkedin",
+            "apple" => "apple",
+            _ => ""
+        };
 }

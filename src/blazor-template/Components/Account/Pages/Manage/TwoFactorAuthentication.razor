@@ -14,62 +14,650 @@
 
 <PageTitle>Two-factor authentication (2FA)</PageTitle>
 
+<style>
+    .tfa-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .tfa-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .tfa-info h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .tfa-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .security-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .security-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .security-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .security-card.enabled {
+            border-color: var(--color-success);
+            background: linear-gradient(135deg, #f8fff8, #f0fff0);
+        }
+
+        .security-card.disabled {
+            border-color: var(--color-warning);
+            background: linear-gradient(135deg, #fffef8, #fefef0);
+        }
+
+        .security-card.warning {
+            border-color: var(--color-danger);
+            background: linear-gradient(135deg, #fff8f8, #fff0f0);
+        }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-indicator {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+
+        .status-indicator.enabled {
+            background: var(--color-success);
+        }
+
+        .status-indicator.disabled {
+            background: var(--color-warning);
+        }
+
+        .status-indicator.warning {
+            background: var(--color-danger);
+        }
+
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--color-dark);
+    }
+
+    .card-subtitle {
+        font-size: 0.85rem;
+        margin: 0.25rem 0 0 0;
+        opacity: 0.8;
+    }
+
+    .card-content {
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+    }
+
+    .tfa-sections {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .tfa-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+        .tfa-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(120, 39, 137, 0.1);
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .authenticator-setup {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .authenticator-info h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: var(--color-dark);
+    }
+
+    .authenticator-info p {
+        margin: 0 0 1rem 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .authenticator-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .authenticator-visual {
+        text-align: center;
+        min-width: 120px;
+    }
+
+    .phone-icon {
+        font-size: 4rem;
+        color: var(--color-primary);
+        margin-bottom: 1rem;
+    }
+
+    .phone-status {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+        .phone-status.setup {
+            background: #e8f4fd;
+            color: #0c5460;
+        }
+
+        .phone-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+    .recovery-warning {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+        .recovery-warning.danger {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-color: var(--color-danger);
+        }
+
+    .warning-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .warning-icon {
+        font-size: 1.5rem;
+    }
+
+    .warning-title {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .warning-content {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .quick-actions {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+    }
+
+        .quick-actions h4 {
+            margin: 0 0 1rem 0;
+            color: var(--color-dark);
+        }
+
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .tfa-header
+
+    {
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .security-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .authenticator-setup {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .tfa-section {
+        padding: 1.5rem;
+    }
+
+    .card-actions,
+    .authenticator-actions {
+        flex-direction: column;
+    }
+
+        .card-actions .btn,
+        .authenticator-actions .btn {
+            width: 100%;
+        }
+
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    }
+
+    /* Loading states */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        z-index: 10;
+    }
+
+    .spinner {
+        width: 2rem;
+        height: 2rem;
+        border: 3px solid #e9ecef;
+        border-top: 3px solid var(--color-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+</style>
+
+<!-- Page Header -->
+<div class="tfa-header">
+    <div class="tfa-icon">
+        <i class="fas fa-shield-alt"></i>
+    </div>
+    <div class="tfa-info">
+        <h2>Two-Factor Authentication</h2>
+        <p>Add an extra layer of security to protect your account</p>
+    </div>
+</div>
+
+<!-- Status Message -->
 <StatusMessage />
-<h3>Two-factor authentication (2FA)</h3>
+
 @if (canTrack)
 {
-    if (is2faEnabled)
-    {
-        if (recoveryCodesLeft == 0)
+    <!-- Security Overview Cards -->
+    <div class="security-overview">
+        <!-- 2FA Status Card -->
+        <div class="security-card @(is2faEnabled ? "enabled" : "disabled")">
+            <div class="card-header">
+                <div class="status-indicator @(is2faEnabled ? "enabled" : "disabled")">
+                    <i class="fas @(is2faEnabled ? "fa-shield-check" : "fa-shield")"></i>
+                </div>
+                <div>
+                    <div class="card-title">Two-Factor Authentication</div>
+                    <div class="card-subtitle">@(is2faEnabled ? "Enabled" : "Disabled")</div>
+                </div>
+            </div>
+            <div class="card-content">
+                @if (is2faEnabled)
+                {
+                    <p>Your account is protected with two-factor authentication. Well done!</p>
+                }
+                else
+                {
+                    <p>Enable 2FA to add an extra layer of security to your account.</p>
+                }
+            </div>
+            <div class="card-actions">
+                @if (is2faEnabled)
+                {
+                    <a href="Account/Manage/Disable2fa" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-times me-1"></i>Disable 2FA
+                    </a>
+                }
+                else
+                {
+                    <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Enable 2FA
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Recovery Codes Card -->
+        @if (is2faEnabled)
         {
-            <div class="alert alert-danger">
-                <strong>You have no recovery codes left.</strong>
-                <p>You must <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a> before you can log in with a recovery code.</p>
+            <div class="security-card @(recoveryCodesLeft <= 3 ? "warning" : recoveryCodesLeft <= 5 ? "disabled" : "enabled")">
+                <div class="card-header">
+                    <div class="status-indicator @(recoveryCodesLeft <= 3 ? "warning" : recoveryCodesLeft <= 5 ? "disabled" : "enabled")">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">Recovery Codes</div>
+                        <div class="card-subtitle">@recoveryCodesLeft codes remaining</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    @if (recoveryCodesLeft == 0)
+                    {
+                        <p><strong>No recovery codes left!</strong> Generate new ones immediately.</p>
+                    }
+                    else if (recoveryCodesLeft <= 3)
+                    {
+                        <p><strong>Low recovery codes.</strong> Consider generating new ones soon.</p>
+                    }
+                    else
+                    {
+                        <p>You have backup codes to recover your account if needed.</p>
+                    }
+                </div>
+                <div class="card-actions">
+                    <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-sync me-1"></i>Generate New
+                    </a>
+                </div>
+            </div>
+        }
+
+        <!-- Device Memory Card -->
+        @if (is2faEnabled)
+        {
+            <div class="security-card @(isMachineRemembered ? "enabled" : "disabled")">
+                <div class="card-header">
+                    <div class="status-indicator @(isMachineRemembered ? "enabled" : "disabled")">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <div>
+                        <div class="card-title">This Device</div>
+                        <div class="card-subtitle">@(isMachineRemembered ? "Remembered" : "Not Remembered")</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    @if (isMachineRemembered)
+                    {
+                        <p>This device is trusted and won't require 2FA codes.</p>
+                    }
+                    else
+                    {
+                        <p>This device will always require 2FA codes for sign-in.</p>
+                    }
+                </div>
+                @if (isMachineRemembered)
+                {
+                    <div class="card-actions">
+                        <form style="display: inline-block" @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Forget Device
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Recovery Codes Warning -->
+    @if (is2faEnabled)
+    {
+        @if (recoveryCodesLeft == 0)
+        {
+            <div class="recovery-warning danger">
+                <div class="warning-header">
+                    <i class="fas fa-exclamation-triangle warning-icon" style="color: var(--color-danger);"></i>
+                    <h4 class="warning-title" style="color: var(--color-danger);">Urgent: No Recovery Codes Left</h4>
+                </div>
+                <p class="warning-content" style="color: var(--color-danger);">
+                    <strong>You have no recovery codes left.</strong> You must
+                    <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a>
+                    before you can log in with a recovery code if you lose access to your authenticator.
+                </p>
             </div>
         }
         else if (recoveryCodesLeft == 1)
         {
-            <div class="alert alert-danger">
-                <strong>You have 1 recovery code left.</strong>
-                <p>You can <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a>.</p>
+            <div class="recovery-warning danger">
+                <div class="warning-header">
+                    <i class="fas fa-exclamation-triangle warning-icon" style="color: var(--color-danger);"></i>
+                    <h4 class="warning-title" style="color: var(--color-danger);">Warning: Only 1 Recovery Code Left</h4>
+                </div>
+                <p class="warning-content" style="color: var(--color-danger);">
+                    <strong>You have 1 recovery code left.</strong> You should
+                    <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a> soon.
+                </p>
             </div>
         }
         else if (recoveryCodesLeft <= 3)
         {
-            <div class="alert alert-warning">
-                <strong>You have @recoveryCodesLeft recovery codes left.</strong>
-                <p>You should <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a>.</p>
+            <div class="recovery-warning">
+                <div class="warning-header">
+                    <i class="fas fa-exclamation-triangle warning-icon" style="color: #856404;"></i>
+                    <h4 class="warning-title" style="color: #856404;">Low Recovery Codes</h4>
+                </div>
+                <p class="warning-content" style="color: #856404;">
+                    <strong>You have @recoveryCodesLeft recovery codes left.</strong> You should
+                    <a href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</a>
+                    when convenient.
+                </p>
             </div>
         }
+    }
 
-        if (isMachineRemembered)
+    <!-- 2FA Sections -->
+    <div class="tfa-sections">
+        <!-- Authenticator App Section -->
+        <div class="tfa-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Authenticator App</h3>
+                    <p class="section-description">Use an authenticator app to generate time-based codes</p>
+                </div>
+            </div>
+
+            <div class="authenticator-setup">
+                <div class="authenticator-info">
+                    @if (!hasAuthenticator)
+                    {
+                        <h4>Set Up Authenticator App</h4>
+                        <p>
+                            An authenticator app provides an extra layer of security by generating time-based codes
+                            that change every 30 seconds. Popular apps include Google Authenticator, Microsoft
+                            Authenticator, and Authy.
+                        </p>
+                        <div class="authenticator-actions">
+                            <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Add Authenticator App
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <h4>Authenticator App Configured</h4>
+                        <p>
+                            Your authenticator app is set up and ready to use. You can reconfigure it or
+                            reset your authenticator key if needed.
+                        </p>
+                        <div class="authenticator-actions">
+                            <a href="Account/Manage/EnableAuthenticator" class="btn btn-outline-primary">
+                                <i class="fas fa-cog me-2"></i>
+                                Reconfigure App
+                            </a>
+                            <a href="Account/Manage/ResetAuthenticator" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync me-2"></i>
+                                Reset Authenticator
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <div class="authenticator-visual">
+                    <div class="phone-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="phone-status @(hasAuthenticator ? "active" : "setup")">
+                        @(hasAuthenticator ? "Active" : "Setup Required")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        @if (is2faEnabled)
         {
-            <form style="display: inline-block" @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
-                <AntiforgeryToken />
-                <button type="submit" class="btn btn-primary">Forget this browser</button>
-            </form>
+            <div class="quick-actions">
+                <h4><i class="fas fa-bolt me-2"></i>Quick Actions</h4>
+                <p class="text-muted">Common two-factor authentication management tasks</p>
+
+                <div class="quick-actions-grid">
+                    <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-outline-primary">
+                        <i class="fas fa-key me-2"></i>
+                        Generate Recovery Codes
+                    </a>
+                    <a href="Account/Manage/ResetAuthenticator" class="btn btn-outline-secondary">
+                        <i class="fas fa-sync me-2"></i>
+                        Reset Authenticator
+                    </a>
+                    <a href="Account/Manage/Disable2fa" class="btn btn-outline-danger">
+                        <i class="fas fa-times me-2"></i>
+                        Disable 2FA
+                    </a>
+                </div>
+            </div>
         }
-
-        <a href="Account/Manage/Disable2fa" class="btn btn-primary">Disable 2FA</a>
-        <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-primary">Reset recovery codes</a>
-    }
-
-    <h4>Authenticator app</h4>
-    @if (!hasAuthenticator)
-    {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Add authenticator app</a>
-    }
-    else
-    {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Set up authenticator app</a>
-        <a href="Account/Manage/ResetAuthenticator" class="btn btn-primary">Reset authenticator app</a>
-    }
+    </div>
 }
 else
 {
-    <div class="alert alert-danger">
-        <strong>Privacy and cookie policy have not been accepted.</strong>
-        <p>You must accept the policy before you can enable two factor authentication.</p>
+    <div class="tfa-section">
+        <div class="recovery-warning danger">
+            <div class="warning-header">
+                <i class="fas fa-exclamation-triangle warning-icon" style="color: var(--color-danger);"></i>
+                <h4 class="warning-title" style="color: var(--color-danger);">Privacy Policy Required</h4>
+            </div>
+            <p class="warning-content" style="color: var(--color-danger);">
+                <strong>Privacy and cookie policy have not been accepted.</strong>
+                You must accept the policy before you can enable two factor authentication.
+            </p>
+        </div>
     </div>
 }
 

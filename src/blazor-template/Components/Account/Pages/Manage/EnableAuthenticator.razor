@@ -18,54 +18,739 @@
 
 <PageTitle>Configure authenticator app</PageTitle>
 
+<style>
+    .authenticator-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .authenticator-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .authenticator-info h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .authenticator-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .setup-progress {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+    }
+
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        border: 3px solid;
+        transition: all 0.3s ease;
+    }
+
+        .step-circle.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .step-circle.completed {
+            background: var(--color-success);
+            border-color: var(--color-success);
+            color: white;
+        }
+
+        .step-circle.pending {
+            background: white;
+            border-color: #dee2e6;
+            color: #6c757d;
+        }
+
+    .step-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+        color: #6c757d;
+    }
+
+        .step-label.active {
+            color: var(--color-primary);
+        }
+
+    .step-connector {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        right: -50%;
+        height: 3px;
+        background: #dee2e6;
+        z-index: -1;
+    }
+
+        .step-connector.completed {
+            background: var(--color-success);
+        }
+
+    .setup-sections {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .setup-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+        .setup-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(120, 39, 137, 0.1);
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .step-number {
+        background: var(--color-primary);
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .app-recommendations {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+
+    .app-card {
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+        .app-card:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+    .app-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--color-primary);
+    }
+
+    .app-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--color-dark);
+    }
+
+    .app-description {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .app-links {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .app-link {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+        .app-link.android {
+            background: #34a853;
+            color: white;
+        }
+
+        .app-link.ios {
+            background: #007aff;
+            color: white;
+        }
+
+        .app-link:hover {
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: white;
+        }
+
+    .qr-setup {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+
+    .qr-instructions {
+        flex: 1;
+    }
+
+    .qr-visual {
+        text-align: center;
+        min-width: 200px;
+    }
+
+    .qr-placeholder {
+        width: 180px;
+        height: 180px;
+        border: 3px dashed #dee2e6;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem auto;
+        background: #f8f9fa;
+    }
+
+    .qr-icon {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 0.5rem;
+    }
+
+    .qr-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-align: center;
+    }
+
+    .manual-key {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: center;
+    }
+
+    .key-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .key-value {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        background: white;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        word-break: break-all;
+        letter-spacing: 2px;
+    }
+
+    .key-help {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .verification-form {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .code-input {
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 4px;
+        padding: 1rem;
+        border: 3px solid #dee2e6;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto 1rem auto;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+        .code-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.2rem rgba(120, 39, 137, 0.25);
+        }
+
+    .code-help {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+
+    .verify-actions {
+        text-align: center;
+    }
+
+    .btn-verify {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: white;
+        margin-right: 1rem;
+    }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(120, 39, 137, 0.3);
+            color: white;
+        }
+
+        .btn-verify:disabled {
+            transform: none;
+            opacity: 0.7;
+        }
+
+    .info-alert {
+        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        border: 2px solid #17a2b8;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+    }
+
+    .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .alert-icon {
+        color: #0c5460;
+        font-size: 1.25rem;
+    }
+
+    .alert-title {
+        font-weight: 600;
+        color: #0c5460;
+        margin: 0;
+    }
+
+    .alert-content {
+        color: #0c5460;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .authenticator-header
+
+    {
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .progress-steps {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .step-connector {
+        display: none;
+    }
+
+    .setup-section {
+        padding: 1.5rem;
+    }
+
+    .qr-setup {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .app-recommendations {
+        grid-template-columns: 1fr;
+    }
+
+    .verification-form {
+        padding: 1.5rem;
+    }
+
+    .code-input {
+        font-size: 1.25rem;
+        letter-spacing: 2px;
+    }
+
+    }
+
+    /* Loading states */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        z-index: 10;
+    }
+
+    .spinner {
+        width: 2rem;
+        height: 2rem;
+        border: 3px solid #e9ecef;
+        border-top: 3px solid var(--color-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+</style>
+
 @if (recoveryCodes is not null)
 {
     <ShowRecoveryCodes RecoveryCodes="recoveryCodes.ToArray()" StatusMessage="@message" />
 }
 else
 {
+    <!-- Page Header -->
+    <div class="authenticator-header">
+        <div class="authenticator-icon">
+            <i class="fas fa-mobile-alt"></i>
+        </div>
+        <div class="authenticator-info">
+            <h2>Configure Authenticator App</h2>
+            <p>Set up two-factor authentication for enhanced account security</p>
+        </div>
+    </div>
+
+    <!-- Status Message -->
     <StatusMessage Message="@message" />
-    <h3>Configure authenticator app</h3>
-    <div>
-        <p>To use an authenticator app go through the following steps:</p>
-        <ol class="list">
-            <li>
-                <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
-                    Google Authenticator for
-                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a> and
-                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>.
-                </p>
-            </li>
-            <li>
-                <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-                <div class="alert alert-info">Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</div>
-                <div></div>
-                <div data-url="@authenticatorUri"></div>
-            </li>
-            <li>
-                <p>
-                    Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                    with a unique code. Enter the code in the confirmation box below.
-                </p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
-                            <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code." />
-                                <label for="code" class="control-label form-label">Verification Code</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
-                            </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
-                            <ValidationSummary class="text-danger" role="alert" />
-                        </EditForm>
+
+    <!-- Setup Progress -->
+    <div class="setup-progress">
+        <div class="progress-steps">
+            <div class="progress-step">
+                <div class="step-circle completed">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-label">Download App</div>
+                <div class="step-connector completed"></div>
+            </div>
+            <div class="progress-step">
+                <div class="step-circle active">2</div>
+                <div class="step-label active">Scan QR Code</div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="progress-step">
+                <div class="step-circle pending">3</div>
+                <div class="step-label">Verify Setup</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="setup-sections">
+        <!-- Step 1: Download App -->
+        <div class="setup-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Step 1: Download an Authenticator App</h3>
+                    <p class="section-description">Choose and install a two-factor authentication app on your device</p>
+                </div>
+            </div>
+
+            <div class="app-recommendations">
+                <div class="app-card">
+                    <div class="app-icon">
+                        <i class="fab fa-microsoft"></i>
+                    </div>
+                    <div class="app-name">Microsoft Authenticator</div>
+                    <div class="app-description">Free, secure, and works across all your devices</div>
+                    <div class="app-links">
+                        <a href="https://play.google.com/store/apps/details?id=com.azure.authenticator" class="app-link android" target="_blank">
+                            <i class="fab fa-android"></i> Android
+                        </a>
+                        <a href="https://apps.apple.com/us/app/microsoft-authenticator/id983156458" class="app-link ios" target="_blank">
+                            <i class="fab fa-apple"></i> iOS
+                        </a>
                     </div>
                 </div>
-            </li>
-        </ol>
+
+                <div class="app-card">
+                    <div class="app-icon">
+                        <i class="fab fa-google"></i>
+                    </div>
+                    <div class="app-name">Google Authenticator</div>
+                    <div class="app-description">Simple and reliable authenticator from Google</div>
+                    <div class="app-links">
+                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" class="app-link android" target="_blank">
+                            <i class="fab fa-android"></i> Android
+                        </a>
+                        <a href="https://apps.apple.com/us/app/google-authenticator/id388497605" class="app-link ios" target="_blank">
+                            <i class="fab fa-apple"></i> iOS
+                        </a>
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <div class="app-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="app-name">Authy</div>
+                    <div class="app-description">Advanced features with cloud backup and sync</div>
+                    <div class="app-links">
+                        <a href="https://play.google.com/store/apps/details?id=com.authy.authy" class="app-link android" target="_blank">
+                            <i class="fab fa-android"></i> Android
+                        </a>
+                        <a href="https://apps.apple.com/us/app/authy/id494168017" class="app-link ios" target="_blank">
+                            <i class="fab fa-apple"></i> iOS
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Scan QR Code -->
+        <div class="setup-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Step 2: Scan QR Code or Enter Key</h3>
+                    <p class="section-description">Add this account to your authenticator app</p>
+                </div>
+            </div>
+
+            <div class="qr-setup">
+                <div class="qr-instructions">
+                    <h4 style="margin-bottom: 1rem; color: var(--color-dark);">
+                        <span class="step-number">1</span>
+                        Open your authenticator app
+                    </h4>
+                    <p style="margin-bottom: 1.5rem; color: #6c757d;">
+                        Launch the authenticator app you just downloaded on your mobile device.
+                    </p>
+
+                    <h4 style="margin-bottom: 1rem; color: var(--color-dark);">
+                        <span class="step-number">2</span>
+                        Scan the QR code or enter the key manually
+                    </h4>
+                    <p style="margin-bottom: 0; color: #6c757d;">
+                        Use your app's "Add Account" or "+" button, then either scan the QR code
+                        or enter the key manually if you can't scan.
+                    </p>
+                </div>
+
+                <div class="qr-visual">
+                    <div class="qr-placeholder">
+                        <i class="fas fa-qrcode qr-icon"></i>
+                        <div class="qr-text">QR Code will appear here<br />when implemented</div>
+                    </div>
+                    <div class="info-alert">
+                        <div class="alert-header">
+                            <i class="fas fa-info-circle alert-icon"></i>
+                            <h4 class="alert-title">QR Code Setup</h4>
+                        </div>
+                        <p class="alert-content">
+                            Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423" target="_blank">enable QR code generation</a>
+                            for your application.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Key Entry -->
+            <div class="manual-key">
+                <div class="key-title">Manual Entry Key:</div>
+                <div class="key-value">@sharedKey</div>
+                <div class="key-help">
+                    If you can't scan the QR code, enter this key manually in your authenticator app.
+                    Spaces and casing don't matter.
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Verification -->
+        <div class="setup-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h3 class="section-title">Step 3: Verify Your Setup</h3>
+                    <p class="section-description">Enter the verification code from your authenticator app</p>
+                </div>
+            </div>
+
+            <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                <DataAnnotationsValidator />
+
+                <div class="verification-form">
+                    <div class="form-title">
+                        <i class="fas fa-mobile-alt"></i>
+                        Enter Verification Code
+                    </div>
+
+                    <InputText @bind-Value="Input.Code" class="code-input" autocomplete="off" placeholder="000000" maxlength="6" />
+
+                    <div class="code-help">
+                        Open your authenticator app and enter the 6-digit code for this account.
+                        The code changes every 30 seconds.
+                    </div>
+
+                    <ValidationMessage For="() => Input.Code" class="validation-message" />
+                    <ValidationSummary class="text-danger" role="alert" />
+
+                    <div class="verify-actions">
+                        <button type="submit" class="btn-verify" disabled="@isVerifying">
+                            @if (isVerifying)
+                            {
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span>Verifying...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check me-2"></i>
+                                <span>Verify & Enable 2FA</span>
+                            }
+                        </button>
+                        <a href="Account/Manage/TwoFactorAuthentication" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
     </div>
 }
 
@@ -77,6 +762,7 @@ else
     private string? sharedKey;
     private string? authenticatorUri;
     private IEnumerable<string>? recoveryCodes;
+    private bool isVerifying = false;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -87,37 +773,47 @@ else
     protected override async Task OnInitializedAsync()
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-
         await LoadSharedKeyAndQrCodeUriAsync(user);
     }
 
     private async Task OnValidSubmitAsync()
     {
-        // Strip spaces and hyphens
-        var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+        isVerifying = true;
+        StateHasChanged();
 
-        var is2faTokenValid = await UserManager.VerifyTwoFactorTokenAsync(
-            user, UserManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
-
-        if (!is2faTokenValid)
+        try
         {
-            message = "Error: Verification code is invalid.";
-            return;
+            // Strip spaces and hyphens
+            var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            var is2faTokenValid = await UserManager.VerifyTwoFactorTokenAsync(
+                user, UserManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+
+            if (!is2faTokenValid)
+            {
+                message = "Error: Verification code is invalid.";
+                return;
+            }
+
+            await UserManager.SetTwoFactorEnabledAsync(user, true);
+            var userId = await UserManager.GetUserIdAsync(user);
+            Logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
+
+            message = "Your authenticator app has been verified.";
+
+            if (await UserManager.CountRecoveryCodesAsync(user) == 0)
+            {
+                recoveryCodes = await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            }
+            else
+            {
+                RedirectManager.RedirectToWithStatus("Account/Manage/TwoFactorAuthentication", message, HttpContext);
+            }
         }
-
-        await UserManager.SetTwoFactorEnabledAsync(user, true);
-        var userId = await UserManager.GetUserIdAsync(user);
-        Logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
-
-        message = "Your authenticator app has been verified.";
-
-        if (await UserManager.CountRecoveryCodesAsync(user) == 0)
+        finally
         {
-            recoveryCodes = await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-        }
-        else
-        {
-            RedirectManager.RedirectToWithStatus("Account/Manage/TwoFactorAuthentication", message, HttpContext);
+            isVerifying = false;
+            StateHasChanged();
         }
     }
 

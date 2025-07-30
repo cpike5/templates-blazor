@@ -4,22 +4,589 @@
 
 <PageTitle>Personal Data</PageTitle>
 
-<StatusMessage />
-<h3>Personal Data</h3>
+<style>
+    .data-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
 
-<div class="row">
-    <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
+    .data-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .data-info h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .data-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .privacy-overview {
+        background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+        border: 2px solid #bee5eb;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .overview-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .overview-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #0c5460;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .overview-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0c5460;
+        margin: 0;
+    }
+
+    .overview-content {
+        color: #0c5460;
+        line-height: 1.6;
+    }
+
+    .data-sections {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .data-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+        .data-section:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(120, 39, 137, 0.1);
+        }
+
+        .data-section.warning {
+            border-color: var(--color-danger);
+            background: linear-gradient(135deg, #fff8f8, #fff0f0);
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+        .section-icon.warning {
+            background: linear-gradient(135deg, var(--color-danger), #dc3545);
+        }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .data-types {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .data-type-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .data-type-title {
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .data-type-list {
+        margin: 0;
+        padding-left: 1.25rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+        .data-type-list li {
+            margin-bottom: 0.25rem;
+        }
+
+    .action-area {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+
+    .action-info {
+        margin-bottom: 1.5rem;
+    }
+
+        .action-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--color-dark);
+            font-size: 1.1rem;
+        }
+
+        .action-info p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(120, 39, 137, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-delete {
+        background: linear-gradient(135deg, var(--color-danger), #dc3545);
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(234, 49, 6, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+    .warning-box {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+        .warning-box.danger {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-color: var(--color-danger);
+        }
+
+    .warning-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .warning-icon {
+        font-size: 1.5rem;
+    }
+
+    .warning-title {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .warning-content {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .gdpr-info {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .gdpr-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .gdpr-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #6f42c1, #8a63d2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .gdpr-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .gdpr-content {
+        color: #6c757d;
+        line-height: 1.6;
+    }
+
+    .rights-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .right-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .right-icon {
+        color: var(--color-success);
+        font-size: 0.8rem;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .data-header
+
+    {
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .data-sections {
+        gap: 1.5rem;
+    }
+
+    .data-section {
+        padding: 1.5rem;
+    }
+
+    .data-types {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+        .action-buttons .btn-download,
+        .action-buttons .btn-delete {
+            width: 100%;
+            justify-content: center;
+        }
+
+    .rights-list {
+        grid-template-columns: 1fr;
+    }
+
+    }
+</style>
+
+<!-- Page Header -->
+<div class="data-header">
+    <div class="data-icon">
+        <i class="fas fa-user-shield"></i>
+    </div>
+    <div class="data-info">
+        <h2>Personal Data</h2>
+        <p>Manage your personal information and privacy settings</p>
+    </div>
+</div>
+
+<!-- Status Message -->
+<StatusMessage />
+
+<!-- Privacy Overview -->
+<div class="privacy-overview">
+    <div class="overview-header">
+        <div class="overview-icon">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <h3 class="overview-title">Your Privacy Rights</h3>
+    </div>
+    <div class="overview-content">
         <p>
-            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+            Your account contains personal data that you have given us. This page allows you to download or delete that data.
+            We are committed to protecting your privacy and ensuring you have control over your personal information.
         </p>
-        <form action="Account/Manage/DownloadPersonalData" method="post">
-            <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">Download</button>
-        </form>
+    </div>
+</div>
+
+<div class="data-sections">
+    <!-- Download Section -->
+    <div class="data-section">
+        <div class="section-header">
+            <div class="section-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div>
+                <h3 class="section-title">Download Your Data</h3>
+                <p class="section-description">Export all your personal information in a portable format</p>
+            </div>
+        </div>
+
+        <div class="data-types">
+            <div class="data-type-card">
+                <h4 class="data-type-title">
+                    <i class="fas fa-user"></i>
+                    Account Information
+                </h4>
+                <ul class="data-type-list">
+                    <li>Username and email address</li>
+                    <li>Account creation date</li>
+                    <li>Phone number (if provided)</li>
+                    <li>Profile settings</li>
+                </ul>
+            </div>
+
+            <div class="data-type-card">
+                <h4 class="data-type-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Security Information
+                </h4>
+                <ul class="data-type-list">
+                    <li>Two-factor authentication keys</li>
+                    <li>External login connections</li>
+                    <li>Login history (recent)</li>
+                    <li>Security preferences</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <div class="warning-header">
+                <i class="fas fa-exclamation-triangle warning-icon" style="color: #856404;"></i>
+                <h4 class="warning-title" style="color: #856404;">Download Information</h4>
+            </div>
+            <p class="warning-content" style="color: #856404;">
+                Your data will be exported as a JSON file containing all your personal information.
+                Keep this file secure as it contains sensitive account details.
+            </p>
+        </div>
+
+        <div class="action-area">
+            <div class="action-info">
+                <h4><i class="fas fa-file-download me-2"></i>Ready to Download?</h4>
+                <p>Click below to generate and download your personal data export.</p>
+            </div>
+            <div class="action-buttons">
+                <form action="Account/Manage/DownloadPersonalData" method="post">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn-download">
+                        <i class="fas fa-download"></i>
+                        <span>Download My Data</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Section -->
+    <div class="data-section warning">
+        <div class="section-header">
+            <div class="section-icon warning">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <div>
+                <h3 class="section-title">Delete Your Account</h3>
+                <p class="section-description">Permanently remove your account and all associated data</p>
+            </div>
+        </div>
+
+        <div class="warning-box danger">
+            <div class="warning-header">
+                <i class="fas fa-exclamation-triangle warning-icon" style="color: var(--color-danger);"></i>
+                <h4 class="warning-title" style="color: var(--color-danger);">Permanent Action Warning</h4>
+            </div>
+            <p class="warning-content" style="color: var(--color-danger);">
+                <strong>Deleting your account will permanently remove all your data, and this action cannot be recovered.</strong>
+                This includes your profile, settings, history, and any associated information.
+            </p>
+        </div>
+
+        <div class="data-types">
+            <div class="data-type-card">
+                <h4 class="data-type-title">
+                    <i class="fas fa-times-circle"></i>
+                    What Gets Deleted
+                </h4>
+                <ul class="data-type-list">
+                    <li>Your account and profile</li>
+                    <li>All personal information</li>
+                    <li>Security settings and 2FA</li>
+                    <li>External login connections</li>
+                    <li>Account history and logs</li>
+                </ul>
+            </div>
+
+            <div class="data-type-card">
+                <h4 class="data-type-title">
+                    <i class="fas fa-clock"></i>
+                    Important Notes
+                </h4>
+                <ul class="data-type-list">
+                    <li>Action is immediate and irreversible</li>
+                    <li>You'll be signed out immediately</li>
+                    <li>Cannot use the same email again</li>
+                    <li>No recovery options available</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="action-area">
+            <div class="action-info">
+                <h4><i class="fas fa-exclamation-triangle me-2"></i>Delete Account Permanently</h4>
+                <p>This action cannot be undone. Please be absolutely certain before proceeding.</p>
+            </div>
+            <div class="action-buttons">
+                <a href="Account/Manage/DeletePersonalData" class="btn-delete">
+                    <i class="fas fa-trash-alt"></i>
+                    <span>Delete My Account</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GDPR Rights Information -->
+<div class="gdpr-info">
+    <div class="gdpr-header">
+        <div class="gdpr-icon">
+            <i class="fas fa-balance-scale"></i>
+        </div>
+        <h3 class="gdpr-title">Your Data Protection Rights</h3>
+    </div>
+    <div class="gdpr-content">
         <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Delete</a>
+            Under data protection regulations, you have certain rights regarding your personal data.
+            These rights are designed to give you control over how your information is used.
         </p>
+
+        <div class="rights-list">
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to access your data</span>
+            </div>
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to correct inaccuracies</span>
+            </div>
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to delete your data</span>
+            </div>
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to data portability</span>
+            </div>
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to object to processing</span>
+            </div>
+            <div class="right-item">
+                <i class="fas fa-check right-icon"></i>
+                <span>Right to restrict processing</span>
+            </div>
+        </div>
     </div>
 </div>
 
