@@ -10,29 +10,20 @@ namespace BlazorTemplate.Data
     public class DataSeeder
     {
         private readonly ILogger _logger;
-        private readonly IServiceProvider services;
+        private readonly IServiceProvider _serviceProvider;
 
         public DataSeeder(IServiceProvider serviceProvider)
         {
-            services = serviceProvider;
-            _logger = services.GetRequiredService<ILogger<DataSeeder>>();
+            _serviceProvider = serviceProvider;
+            _logger = _serviceProvider.GetRequiredService<ILogger<DataSeeder>>();
         }
-
-        /// <summary>
-        /// Seeds the database with initial user role data
-        /// </summary>
-        public static void SeedDatabase(IServiceProvider services)
-        {
-            var seeder = new DataSeeder(services);
-            seeder.SeedDatabase();
-        }
-
-        private void SeedDatabase()
+        
+        public void SeedDatabase()
         {
             try
             {
-                var db = services.GetRequiredService<ApplicationDbContext>();
-                var config = services.GetRequiredService<IOptions<ConfigurationOptions>>();
+                var db = _serviceProvider.GetRequiredService<ApplicationDbContext>() ?? throw new ArgumentException("ApplicationDbContext not registered");
+                var config = _serviceProvider.GetRequiredService<IOptions<ConfigurationOptions>>() ?? throw new ArgumentException("ConfigurationOptions not registered");
 
                 _logger.LogDebug("Seeding database");
 

@@ -1,4 +1,5 @@
 ﻿using BlazorTemplate.Configuration.Navigation;
+using BlazorTemplate.Data;
 using BlazorTemplate.Services;
 
 namespace BlazorTemplate.Extensions
@@ -9,6 +10,13 @@ namespace BlazorTemplate.Extensions
         {
             services.Configure<NavigationConfiguration>(configuration.GetSection(NavigationConfiguration.SectionName));
             services.AddScoped<INavigationService, NavigationService>();
+            return services;
+        }
+
+        public static IServiceCollection AddFirstTimeSetupServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddSingleton<IFirstTimeSetupService, FirstTimeSetupService>();
+            services.AddScoped<DataSeeder>();
             return services;
         }
     }

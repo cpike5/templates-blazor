@@ -18,6 +18,8 @@ namespace BlazorTemplate
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            bool firstTimeSetup = Convert.ToBoolean(builder.Configuration["SetupMode"]);
+
             // Configure logging
             builder.Services.AddSerilog(logger =>
             {
@@ -70,6 +72,11 @@ namespace BlazorTemplate
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+            if (firstTimeSetup)
+            {
+                builder.Services.AddFirstTimeSetupServices(builder.Configuration);
+            }            
+
             var app = builder.Build();
 
             using var scope = app.Services.CreateScope();
@@ -80,7 +87,8 @@ namespace BlazorTemplate
             // Seed the database
             if (Convert.ToBoolean(builder.Configuration["SetupMode"]))
             {
-                DataSeeder.SeedDatabase(scope.ServiceProvider);
+                var setupService = scope.ServiceProvider.GetRequiredService<IFirstTimeSetupService>();
+                setupService.Setup();
             }
 
 
