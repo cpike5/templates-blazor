@@ -17,7 +17,7 @@ namespace BlazorTemplate.Data
             _serviceProvider = serviceProvider;
             _logger = _serviceProvider.GetRequiredService<ILogger<DataSeeder>>();
         }
-        
+
         public void SeedDatabase()
         {
             try
@@ -48,6 +48,43 @@ namespace BlazorTemplate.Data
                         RoleId = adminRole.Id,
                         UserId = adminUser.Id
                     });
+                }
+
+                // Create the Guest User if enabled
+                if (config.Value.Setup.EnableGuestUser)
+                {
+                    _logger.LogInformation("Guest Account enabled");
+                    var guest = config.Value.Setup.GuestUser;
+                    var guestUser = db.Users.SingleOrDefault(user => user.Email == guest.Email);
+                    if (guestUser == null)
+                    {
+                        _logger.LogInformation("Guest account is enabled but configured account does not exist.");
+                        try
+                        {
+                            _logger.LogInformation("Creating guest account");
+                            var userManager = _serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                            var newUser = userManager.CreateAsync(new ApplicationUser
+                            {
+                                UserName = guest.Email,
+                                Email = guest.Email,
+                                EmailConfirmed = true,
+                                LockoutEnabled = false
+                            }, guest.Password).GetAwaiter().GetResult();
+                            if (newUser.Succeeded)
+                            {
+                                _logger.LogInformation("Guest account {Email} created successfully", guest.Email);
+                            }
+                            else
+                            {
+                                var errors = string.Join(", ", newUser.Errors.Select(error => $"{error.Code} - {error.Description}"));
+                                throw new InvalidOperationException(errors);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Error creating guest account");
+                        }
+                    }
                 }
 
                 db.SaveChanges();

@@ -1,69 +1,433 @@
 ﻿@page "/"
 @using BlazorTemplate.Components.Layout
-@layout MainLayout
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
-<ContentPage Title="Dashboard" Subtitle="Welcome back! Here's an overview of your application.">
-    
-    <!-- Main content goes here -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-code" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
-                    <h4>Ready for Your Content</h4>
-                    <p class="text-muted">This is your main content area. Replace this with your Blazor components and application content.</p>
-                    <button class="btn btn-primary" @onclick="OnGetStartedClick">Get Started</button>
+@* Use a minimal layout for the landing page *@
+@layout BlazorTemplate.Components.Layout.MainLayout
+
+<style>
+    .landing-container {
+        min-height: calc(100vh - var(--topbar-height));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--color-light) 0%, #ffffff 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .landing-content {
+        text-align: center;
+        max-width: 800px;
+        padding: 3rem 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .brand-logo {
+        font-size: 4rem;
+        color: var(--color-primary);
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    .site-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+        animation: fadeInUp 1s ease-out 0.2s both;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .site-subtitle {
+        font-size: 1.5rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+        font-weight: 300;
+        animation: fadeInUp 1s ease-out 0.4s both;
+        line-height: 1.4;
+    }
+
+    .signup-blurb {
+        font-size: 1.25rem;
+        color: var(--color-dark);
+        margin-bottom: 3rem;
+        line-height: 1.6;
+        animation: fadeInUp 1s ease-out 0.6s both;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeInUp 1s ease-out 0.8s both;
+    }
+
+    .btn-cta {
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 180px;
+        justify-content: center;
+    }
+
+    .btn-primary-cta {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        box-shadow: 0 4px 15px rgba(120, 39, 137, 0.3);
+    }
+
+        .btn-primary-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(120, 39, 137, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-secondary-cta {
+        background: white;
+        color: var(--color-primary);
+        border: 2px solid var(--color-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+        .btn-secondary-cta:hover {
+            background: var(--color-primary);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(120, 39, 137, 0.3);
+            text-decoration: none;
+        }
+
+    .features-preview {
+        margin-top: 4rem;
+        animation: fadeInUp 1s ease-out 1s both;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: var(--color-primary);
+        margin-bottom: 1rem;
+    }
+
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.75rem;
+    }
+
+    .feature-description {
+        color: #6c757d;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .background-decoration {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(120, 39, 137, 0.05), rgba(142, 93, 183, 0.03));
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .bg-shape-1 {
+        width: 300px;
+        height: 300px;
+        top: 10%;
+        right: 10%;
+        animation-delay: 0s;
+    }
+
+    .bg-shape-2 {
+        width: 200px;
+        height: 200px;
+        bottom: 20%;
+        left: 10%;
+        animation-delay: 2s;
+    }
+
+    .bg-shape-3 {
+        width: 150px;
+        height: 150px;
+        top: 60%;
+        right: 20%;
+        animation-delay: 4s;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0) rotate(0deg);
+        }
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+        }
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .landing-content {
+            padding: 2rem 1rem;
+        }
+
+        .site-title {
+            font-size: 2.5rem;
+        }
+
+        .site-subtitle {
+            font-size: 1.25rem;
+        }
+
+        .signup-blurb {
+            font-size: 1.1rem;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-cta {
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .brand-logo {
+            font-size: 3rem;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .site-title {
+            font-size: 2rem;
+        }
+
+        .site-subtitle {
+            font-size: 1.1rem;
+        }
+
+        .brand-logo {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+
+@if (showDashboard)
+{
+    <!-- Authenticated User Dashboard -->
+    <ContentPage Title="Dashboard" Subtitle="Welcome back! Here's an overview of your application.">
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-tachometer-alt" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
+                        <h4>Welcome to Your Dashboard</h4>
+                        <p class="text-muted">You're successfully logged in. Start exploring your application features.</p>
+                        <button class="btn btn-primary" @onclick="OnGetStartedClick">Explore Features</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar text-primary me-2"></i>
+                            Analytics
+                        </h5>
+                        <p class="card-text">View your application metrics and performance data.</p>
+                        <a href="/analytics" class="btn btn-outline-primary btn-sm">View Analytics</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-users text-success me-2"></i>
+                            Users
+                        </h5>
+                        <p class="card-text">Manage user accounts and permissions.</p>
+                        <a href="/users" class="btn btn-outline-success btn-sm">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-cog text-warning me-2"></i>
+                            Settings
+                        </h5>
+                        <p class="card-text">Configure your application settings and preferences.</p>
+                        <a href="/settings" class="btn btn-outline-warning btn-sm">Open Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </ContentPage>
+}
+else
+{
+    <!-- Landing Page for Non-Authenticated Users -->
+    <div class="landing-container">
+        <!-- Background Decorations -->
+        <div class="background-decoration">
+            <div class="bg-shape bg-shape-1"></div>
+            <div class="bg-shape bg-shape-2"></div>
+            <div class="bg-shape bg-shape-3"></div>
+        </div>
+
+        <div class="landing-content">
+            <!-- Brand Logo -->
+            <div class="brand-logo">
+                <i class="fas fa-cube"></i>
+            </div>
+
+            <!-- Site Title -->
+            <h1 class="site-title">Blazor Template</h1>
+            
+            <!-- Site Subtitle -->
+            <p class="site-subtitle">Modern Web Application Platform</p>
+
+            <!-- Signup Blurb -->
+            <div class="signup-blurb">
+                Experience the power of modern web development with our feature-rich Blazor application. 
+                Built with cutting-edge technology, designed for performance, and crafted for an 
+                exceptional user experience.
+            </div>
+
+            <!-- Call-to-Action Buttons -->
+            <div class="cta-buttons">
+                <a href="/Account/Register" class="btn-cta btn-primary-cta">
+                    <i class="fas fa-rocket"></i>
+                    Get Started
+                </a>
+                <a href="/Account/Login" class="btn-cta btn-secondary-cta">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </a>
+            </div>
+
+            <!-- Features Preview -->
+            <div class="features-preview">
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="feature-title">Lightning Fast</h3>
+                        <p class="feature-description">
+                            Built with Blazor Server for exceptional performance and real-time interactivity.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Secure & Reliable</h3>
+                        <p class="feature-description">
+                            Enterprise-grade security with ASP.NET Core Identity and robust authentication.
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Responsive Design</h3>
+                        <p class="feature-description">
+                            Beautiful, responsive interface that works perfectly on all devices and screen sizes.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Example of additional content sections -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-chart-bar text-primary me-2"></i>
-                        Analytics
-                    </h5>
-                    <p class="card-text">View your application metrics and performance data.</p>
-                    <a href="/analytics" class="btn btn-outline-primary btn-sm">View Analytics</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-users text-success me-2"></i>
-                        Users
-                    </h5>
-                    <p class="card-text">Manage user accounts and permissions.</p>
-                    <a href="/users" class="btn btn-outline-success btn-sm">Manage Users</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-cog text-warning me-2"></i>
-                        Settings
-                    </h5>
-                    <p class="card-text">Configure your application settings and preferences.</p>
-                    <a href="/settings" class="btn btn-outline-warning btn-sm">Open Settings</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</ContentPage>
+}
 
 @code {
+    private bool showDashboard = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        showDashboard = authState.User?.Identity?.IsAuthenticated ?? false;
+    }
+
     private void OnGetStartedClick()
     {
         // Handle button click logic here
-        Console.WriteLine("Get Started button clicked!");
+        NavigationManager.NavigateTo("/");
     }
 }

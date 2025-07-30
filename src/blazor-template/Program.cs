@@ -19,7 +19,7 @@ namespace BlazorTemplate
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            bool firstTimeSetup = Convert.ToBoolean(builder.Configuration["SetupMode"]);
+            bool firstTimeSetup = Convert.ToBoolean(builder.Configuration["Site:Setup:EnableSetupMode"]);
 
             // Configure logging
             builder.Services.AddSerilog(logger =>
@@ -67,7 +67,7 @@ namespace BlazorTemplate
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
@@ -86,13 +86,11 @@ namespace BlazorTemplate
             // Get a reference to the DB Context
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // Seed the database
-            if (Convert.ToBoolean(builder.Configuration["SetupMode"]))
+            if (firstTimeSetup)
             {
                 var setupService = scope.ServiceProvider.GetRequiredService<IFirstTimeSetupService>();
                 setupService.Setup();
             }
-
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
