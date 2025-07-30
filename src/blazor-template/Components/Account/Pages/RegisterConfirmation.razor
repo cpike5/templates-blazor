@@ -13,23 +13,361 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
+@layout BlazorTemplate.Components.Account.Shared.AccountLayout
+
 <PageTitle>Register confirmation</PageTitle>
 
-<h1>Register confirmation</h1>
+<style>
+    .confirmation-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, var(--color-light) 0%, #f8f9fa 100%);
+    }
 
-<StatusMessage Message="@statusMessage" />
+    .confirmation-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 600px;
+        width: 100%;
+        border: none;
+    }
 
-@if (emailConfirmationLink is not null)
-{
-    <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
-    </p>
-}
-else
-{
-    <p>Please check your email to confirm your account.</p>
-}
+    .card-header {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        border: none;
+    }
+
+    .confirmation-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 2.5rem;
+    }
+
+    .success-info {
+        background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+        border: 2px solid var(--color-success);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .success-icon {
+        color: var(--color-success);
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .success-title {
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .success-text {
+        color: #155724;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .email-highlight {
+        background: linear-gradient(135deg, var(--color-light), #f8f9fa);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-family: monospace;
+        font-weight: 600;
+        color: var(--color-primary);
+        display: inline-block;
+        margin: 1rem 0;
+        border: 2px solid var(--color-info);
+    }
+
+    .info-details {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        font-size: 0.9rem;
+    }
+
+        .info-details i {
+            margin-right: 0.5rem;
+        }
+
+    .actions {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin: 0.5rem;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 120, 39, 137), 0.3);
+            color: white;
+        }
+
+    .btn-outline-primary {
+        border: 2px solid var(--color-primary);
+        color: var(--color-primary);
+        background: transparent;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin: 0.5rem;
+        text-decoration: none;
+    }
+
+        .btn-outline-primary:hover {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+    .help-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .help-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+    }
+
+    .help-list {
+        text-align: left;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+        .help-list li {
+            margin-bottom: 0.5rem;
+        }
+
+    .dev-notice {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+    }
+
+        .dev-notice strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .dev-notice a {
+            color: #533f03;
+            font-weight: 600;
+        }
+
+    @@media (max-width: 768px) {
+        .confirmation-container
+
+    {
+        padding: 1rem;
+    }
+
+    .card-header {
+        padding: 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .confirmation-icon {
+        font-size: 2.5rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+    }
+
+    .btn-primary,
+    .btn-outline-primary {
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    }
+</style>
+
+<div class="confirmation-container">
+    <div class="confirmation-card">
+        <!-- Header -->
+        <div class="card-header">
+            <div class="confirmation-icon">
+                <i class="fas fa-envelope-open"></i>
+            </div>
+            <h1 class="card-title">Registration Complete!</h1>
+            <p class="card-subtitle">Check your email to activate your account</p>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body">
+            <!-- Status Message -->
+            <StatusMessage Message="@statusMessage" />
+
+            @if (emailConfirmationLink is not null)
+            {
+                <!-- Development Notice -->
+                <div class="dev-notice">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Development Mode Active</strong>
+                    This app does not currently have a real email sender configured. See
+                    <a href="https://aka.ms/aspaccountconf" target="_blank">these docs</a>
+                    for how to configure a real email sender.
+                </div>
+
+                <!-- Success Info -->
+                <div class="success-info">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="success-title">Account Created Successfully!</div>
+                    <p class="success-text">
+                        Your account has been created. Since email is not configured,
+                        you can use the confirmation link below to activate your account.
+                    </p>
+                </div>
+
+                <!-- Direct Confirmation Link -->
+                <div class="text-center">
+                    <h2 class="section-title">Activate Your Account</h2>
+                    <p class="section-subtitle">
+                        Click the button below to confirm your email address and activate your account.
+                    </p>
+
+                    <div class="actions">
+                        <a href="@emailConfirmationLink" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Confirm Email Address
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Success Info -->
+                <div class="success-info">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="success-title">Registration Successful!</div>
+                    <p class="success-text">
+                        Your account has been created successfully. Please check your email to complete the activation process.
+                    </p>
+                </div>
+
+                <!-- Email Confirmation Instructions -->
+                <div class="text-center">
+                    <h2 class="section-title">Email Confirmation Required</h2>
+                    <p class="section-subtitle">
+                        We've sent a confirmation email to:
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(Email))
+                    {
+                        <div class="email-highlight">
+                            @Email
+                        </div>
+                    }
+
+                    <p class="section-subtitle">
+                        Please check your email and click the confirmation link to activate your account.
+                    </p>
+
+                    <div class="info-details">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Didn't receive the email?</strong> Check your spam folder, or it may take a few minutes to arrive.
+                        If you still don't see it, you can request a new confirmation email.
+                    </div>
+
+                    <div class="actions">
+                        <a href="Account/ResendEmailConfirmation" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Resend Email
+                        </a>
+                        <a href="Account/Login" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Login
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Help Section -->
+            <div class="help-section">
+                <h3 class="help-title">Need Help?</h3>
+                <ul class="help-list">
+                    <li>Make sure to check your spam or junk folder</li>
+                    <li>Confirmation emails may take a few minutes to arrive</li>
+                    <li>The confirmation link will expire after 24 hours</li>
+                    <li>Contact support if you continue to have issues</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
     private string? emailConfirmationLink;
