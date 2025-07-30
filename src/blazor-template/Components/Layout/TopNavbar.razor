@@ -1,4 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using BlazorTemplate.Data
+@using BlazorTemplate.Services
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserRoleService RoleService
 
 <!-- Top Navigation Bar -->
 <nav class="top-navbar">
@@ -12,51 +17,146 @@
     </a>
 
     <div class="user-info">
-        <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
-            <div class="user-avatar">@GetUserInitials()</div>
-            <div class="user-details">
-                <div class="user-name">@CurrentUser.Name</div>
-                <div class="user-role">@CurrentUser.Role</div>
+        @if (isAuthenticated)
+        {
+            <div class="user-profile dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="user-avatar">@GetUserInitials()</div>
+                <div class="user-details">
+                    <div class="user-name">@GetDisplayName()</div>
+                    <div class="user-role">@GetPrimaryRole()</div>
+                </div>
+                <i class="fas fa-chevron-down ms-2" style="font-size: 0.75rem; color: #6c757d;"></i>
             </div>
-            <i class="fas fa-chevron-down ms-2" style="font-size: 0.75rem; color: #6c757d;"></i>
-        </div>
 
-        <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>My Profile</a></li>
-            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
-            <li><a class="dropdown-item" href="/notifications"><i class="fas fa-bell me-2"></i>Notifications</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign Out</a></li>
-        </ul>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/Account/Manage"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                <li><a class="dropdown-item" href="/Account/Manage/Email"><i class="fas fa-envelope me-2"></i>Email Settings</a></li>
+                <li><a class="dropdown-item" href="/Account/Manage/ChangePassword"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form action="/Account/Logout" method="post" class="d-inline">
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        }
+        else
+        {
+            <div class="auth-links">
+                <a href="/Account/Login" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                </a>
+                <a href="/Account/Register" class="btn btn-primary btn-sm">
+                    <i class="fas fa-user-plus me-1"></i>Register
+                </a>
+            </div>
+        }
     </div>
 </nav>
 
 @code {
-    [Parameter] public string AppName { get; set; } = "Your App";
+    [Parameter] public string AppName { get; set; } = "Blazor Template";
 
-    // You would typically inject these services or get them from authentication
-    private UserInfo CurrentUser = new UserInfo
+    private AuthenticationState? authState;
+    private bool isAuthenticated;
+    private string? userEmail;
+    private string? userName;
+    private List<string> userRoles = new();
+    private string currentUrl = string.Empty;
+
+    protected override async Task OnInitializedAsync()
     {
-        Name = "John Doe",
-        Role = "Administrator"
-    };
+        authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User?.Identity?.IsAuthenticated ?? false;
+
+        if (isAuthenticated && authState.User != null)
+        {
+            // Get user email - try multiple claim types for compatibility
+            userEmail = authState.User.FindFirst(ClaimTypes.Email)?.Value ??
+                       authState.User.FindFirst("email")?.Value ??
+                       authState.User.FindFirst("preferred_username")?.Value;
+
+            // Get user name - try multiple claim types
+            userName = authState.User.FindFirst(ClaimTypes.Name)?.Value ??
+                      authState.User.FindFirst("name")?.Value ??
+                      authState.User.Identity?.Name;
+
+            // Get user roles using your role service
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                try
+                {
+                    var roles = await RoleService.GetUserRolesAsync(userEmail);
+                    userRoles = roles.ToList();
+                }
+                catch (Exception)
+                {
+                    // Handle case where user might not be found in role service yet
+                    userRoles = new List<string>();
+                }
+            }
+        }
+
+        // Get current URL for logout redirect
+        currentUrl = Navigation.Uri;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Re-check authentication state when parameters change
+        await OnInitializedAsync();
+    }
+
+    private string GetDisplayName()
+    {
+        if (!string.IsNullOrEmpty(userName))
+            return userName;
+
+        if (!string.IsNullOrEmpty(userEmail))
+        {
+            // Extract name part from email if no display name is available
+            var atIndex = userEmail.IndexOf('@');
+            return atIndex > 0 ? userEmail.Substring(0, atIndex) : userEmail;
+        }
+
+        return "User";
+    }
 
     private string GetUserInitials()
     {
-        if (string.IsNullOrEmpty(CurrentUser.Name))
+        var displayName = GetDisplayName();
+
+        if (string.IsNullOrEmpty(displayName))
             return "U";
 
-        var parts = CurrentUser.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var parts = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
         {
             return $"{parts[0][0]}{parts[1][0]}".ToUpper();
         }
-        return parts[0][0].ToString().ToUpper();
+        else if (parts.Length == 1 && parts[0].Length > 0)
+        {
+            return parts[0][0].ToString().ToUpper();
+        }
+
+        return "U";
     }
 
-    private class UserInfo
+    private string GetPrimaryRole()
     {
-        public string Name { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
+        if (!userRoles.Any())
+            return "User";
+
+        // Prioritize Administrator role if present
+        if (userRoles.Contains("Administrator", StringComparer.OrdinalIgnoreCase))
+            return "Administrator";
+
+        // Return the first role, or "User" if none
+        return userRoles.FirstOrDefault() ?? "User";
     }
 }
+
+@inject NavigationManager Navigation
