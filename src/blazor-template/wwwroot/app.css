@@ -1,17 +1,4 @@
-:root {
-    /* Color palette */
-    --color-light: #e2e5ef;
-    --color-dark: #150e12;
-    --color-primary: #782789;
-    --color-secondary: #8e5db7;
-    --color-info: #ce9ed8;
-    --color-success: #10a669;
-    --color-warning: #dcce0f;
-    --color-danger: #ea3106;
-    /* Layout variables */
-    --sidebar-width: 260px;
-    --topbar-height: 64px;
-}
+@import url("color-schemes.css");
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
