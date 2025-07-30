@@ -13,62 +13,315 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
+@layout BlazorTemplate.Components.Account.Shared.AccountLayout
+
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, var(--color-light) 0%, #f8f9fa 100%);
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 1000px;
+        width: 100%;
+        border: none;
+    }
+
+    .login-brand {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .brand-logo {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .brand-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .brand-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .login-form {
+        padding: 3rem 2rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-subtitle {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1.5rem;
+    }
+
+        .form-floating > .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem 0.75rem;
+            height: 58px;
+            transition: all 0.3s ease;
+        }
+
+            .form-floating > .form-control:focus {
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb, 120, 39, 137), 0.25);
+            }
+
+        .form-floating > label {
+            padding: 1rem 0.75rem;
+            color: #6c757d;
+        }
+
+    .remember-me {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 0.75rem;
+            accent-color: var(--color-primary);
+        }
+
+    .btn-login {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 2rem;
+        color: white;
+    }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 120, 39, 137), 0.3);
+            color: white;
+        }
+
+        .btn-login:disabled {
+            transform: none;
+            opacity: 0.7;
+        }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+        color: #6c757d;
+    }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dee2e6;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+            font-size: 0.875rem;
+        }
+
+    .external-login {
+        text-align: center;
+    }
+
+    .btn-external {
+        border: 2px solid #dee2e6;
+        background: white;
+        color: var(--color-dark);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+        .btn-external:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-external i {
+            margin-right: 0.5rem;
+        }
+
+    .login-links {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+        .login-links a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            margin: 0.5rem 0;
+        }
+
+            .login-links a:hover {
+                color: var(--color-secondary);
+            }
+
+    .status-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .validation-message {
+        color: var(--color-danger);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    @@media (max-width: 768px) {
+        .login-container
+
+    {
+        padding: 1rem;
+    }
+
+    .login-brand {
+        padding: 2rem 1rem;
+    }
+
+    .login-form {
+        padding: 2rem 1rem;
+    }
+
+    .brand-logo {
+        font-size: 2.5rem;
+    }
+
+    .brand-title {
+        font-size: 1.5rem;
+    }
+
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="row g-0">
+            <!-- Brand Section -->
+            <div class="col-lg-5">
+                <div class="login-brand h-100 d-flex flex-column justify-content-center">
+                    <div class="brand-logo">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <h1 class="brand-title">Welcome Back</h1>
+                    <p class="brand-subtitle">Sign in to your account to continue</p>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
+            </div>
+
+            <!-- Login Form Section -->
+            <div class="col-lg-7">
+                <div class="login-form">
+                    <h2 class="form-title">Sign In</h2>
+                    <p class="form-subtitle">Enter your credentials to access your account</p>
+
+                    <!-- Status Message -->
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="status-message">
+                            Error: @errorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-floating">
+                            <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <label for="email">Email Address</label>
+                            <ValidationMessage For="() => Input.Email" class="validation-message" />
+                        </div>
+
+                        <div class="form-floating">
+                            <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Password" />
+                            <label for="password">Password</label>
+                            <ValidationMessage For="() => Input.Password" class="validation-message" />
+                        </div>
+
+                        <div class="remember-me">
+                            <InputCheckbox @bind-Value="Input.RememberMe" class="form-check-input" />
+                            <label for="rememberMe">Remember me</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-login" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span>Signing In...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                <span>Sign In</span>
+                            }
+                        </button>
+                    </EditForm>
+
+                    <div class="divider">
+                        <span>or continue with</span>
+                    </div>
+
+                    <div class="external-login">
+                        <ExternalLoginPicker />
+                    </div>
+
+                    <div class="login-links">
                         <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
+                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Don't have an account? Create one</a>
                         <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
+                    </div>
                 </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
     private string? errorMessage;
+    private bool isLoading = false;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -90,28 +343,41 @@
 
     public async Task LoginUser()
     {
-        // This doesn't count login failures towards account lockout
-        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-        if (result.Succeeded)
+        isLoading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
         {
-            Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo(ReturnUrl);
+            // This doesn't count login failures towards account lockout
+            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+            var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                Logger.LogInformation("User logged in.");
+                RedirectManager.RedirectTo(ReturnUrl);
+            }
+            else if (result.RequiresTwoFactor)
+            {
+                RedirectManager.RedirectTo(
+                    "Account/LoginWith2fa",
+                    new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+            }
+            else if (result.IsLockedOut)
+            {
+                Logger.LogWarning("User account locked out.");
+                RedirectManager.RedirectTo("Account/Lockout");
+            }
+            else
+            {
+                errorMessage = "Invalid login attempt.";
+            }
         }
-        else if (result.RequiresTwoFactor)
+        finally
         {
-            RedirectManager.RedirectTo(
-                "Account/LoginWith2fa",
-                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
-        }
-        else if (result.IsLockedOut)
-        {
-            Logger.LogWarning("User account locked out.");
-            RedirectManager.RedirectTo("Account/Lockout");
-        }
-        else
-        {
-            errorMessage = "Error: Invalid login attempt.";
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
