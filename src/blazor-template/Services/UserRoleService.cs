@@ -7,7 +7,7 @@ namespace BlazorTemplate.Services
     public interface IUserRoleService
     {
         Task<IEnumerable<ApplicationUser>> GetUsersAsync();
-        Task<IEnumerable<IdentityUserRole<string>>> GetUserRolesAsync(string email);
+        Task<IEnumerable<string>> GetUserRolesAsync(string email);
         Task AddUserToRoleAsync(string email, string roleName);
     }
 
@@ -54,11 +54,13 @@ namespace BlazorTemplate.Services
             await _db.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<IdentityUserRole<string>>> GetUserRolesAsync(string email)
+        public async Task<IEnumerable<string>> GetUserRolesAsync(string email)
         {
             var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == email) ?? throw new ArgumentException("Invalid User");
-
-            var roles = _db.UserRoles.Where(userRole => userRole.UserId == user.Id).AsEnumerable();
+            var roles = await _db.UserRoles
+                .Where(ur => ur.UserId == user.Id)
+                .Join(_db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                .ToListAsync();
 
             return roles;
         }

@@ -6,6 +6,7 @@ using BlazorTemplate.Extensions;
 using BlazorTemplate.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -31,9 +32,10 @@ namespace BlazorTemplate
             // Configure Site Options
             builder.Services.Configure<ConfigurationOptions>(builder.Configuration.GetSection(ConfigurationOptions.SectionName));
 
+            builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+
             builder.Services.AddNavigationServices(builder.Configuration);
 
-            builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
