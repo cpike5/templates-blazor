@@ -5,29 +5,358 @@
 
 @inject SignInManager<ApplicationUser> SignInManager
 
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">Profile</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/Email">Email</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/ChangePassword">Password</NavLink>
-    </li>
-    @if (hasExternalLogins)
-    {
-        <li class="nav-item">
-            <NavLink class="nav-link" href="Account/Manage/ExternalLogins">External logins</NavLink>
-        </li>
+<style>
+    .manage-nav {
+        padding: 1.5rem 0;
+        height: 100%;
     }
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">Two-factor authentication</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/PersonalData">Personal data</NavLink>
-    </li>
-</ul>
+
+    .nav-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6c757d;
+        padding: 0 1.5rem;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    .nav-item {
+        margin-bottom: 0.25rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1.5rem;
+        color: var(--color-dark);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-radius: 0;
+        position: relative;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+        .nav-link:hover {
+            background: linear-gradient(135deg, rgba(120, 39, 137, 0.08), rgba(142, 93, 183, 0.05));
+            color: var(--color-primary);
+            text-decoration: none;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+        }
+
+            .nav-link.active::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 4px;
+                background: linear-gradient(135deg, var(--color-secondary), #ffffff);
+                border-radius: 0 2px 2px 0;
+            }
+
+            .nav-link.active:hover {
+                transform: none;
+                background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+            }
+
+    .nav-icon {
+        width: 20px;
+        margin-right: 0.875rem;
+        font-size: 1rem;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .nav-text {
+        flex: 1;
+    }
+
+    .nav-badge {
+        background: var(--color-warning);
+        color: var(--color-dark);
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        margin-left: auto;
+        min-width: 18px;
+        text-align: center;
+    }
+
+        .nav-badge.danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .nav-badge.success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .nav-badge.info {
+            background: var(--color-info);
+            color: var(--color-dark);
+        }
+
+    /* Security Status Indicators */
+    .security-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .security-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--color-success);
+    }
+
+        .security-status.warning {
+            background: var(--color-warning);
+        }
+
+        .security-status.danger {
+            background: var(--color-danger);
+        }
+
+    /* Quick Actions Section */
+    .quick-actions {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #dee2e6;
+        margin-top: 2rem;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #dee2e6;
+        background: white;
+        color: var(--color-dark);
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+        .quick-action-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            background: rgba(120, 39, 137, 0.05);
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        .quick-action-btn.danger {
+            border-color: var(--color-danger);
+            color: var(--color-danger);
+        }
+
+            .quick-action-btn.danger:hover {
+                border-color: var(--color-danger);
+                background: rgba(234, 49, 6, 0.05);
+                color: var(--color-danger);
+            }
+
+    /* Mobile Responsive */
+    @@media (max-width: 992px) {
+        .manage-nav
+
+    {
+        padding: 1rem 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nav-section {
+        display: contents;
+    }
+
+    .nav-section-title {
+        display: none;
+    }
+
+    .nav-item {
+        margin-bottom: 0;
+    }
+
+    .nav-link {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0 0.5rem;
+        min-width: 120px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .nav-icon {
+        margin-right: 0.5rem;
+    }
+
+    .nav-text {
+        font-size: 0.85rem;
+    }
+
+    .quick-actions {
+        display: none;
+    }
+
+    .nav-badge,
+    .security-indicator {
+        display: none;
+    }
+
+    }
+
+    @@media (max-width: 576px) {
+        .manage-nav
+
+    {
+        padding: 0.5rem;
+    }
+
+    .nav-link {
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.5rem;
+        min-width: 80px;
+    }
+
+    .nav-icon {
+        margin-right: 0;
+        font-size: 1.1rem;
+    }
+
+    .nav-text {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    }
+
+    /* Animation for active state */
+    @@keyframes activeSlide {
+        from
+
+    {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    }
+
+    .nav-link.active::before {
+        animation: activeSlide 0.3s ease-out;
+    }
+</style>
+
+<nav class="manage-nav">
+    <!-- Account Information Section -->
+    <div class="nav-section">
+        <div class="nav-section-title">Account</div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">
+                <i class="nav-icon fas fa-user"></i>
+                <span class="nav-text">Profile</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage/Email">
+                <i class="nav-icon fas fa-envelope"></i>
+                <span class="nav-text">Email</span>
+                <div class="security-indicator">
+                    <div class="security-status" title="Email verified"></div>
+                </div>
+            </NavLink>
+        </div>
+    </div>
+
+    <!-- Security Section -->
+    <div class="nav-section">
+        <div class="nav-section-title">Security</div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage/ChangePassword">
+                <i class="nav-icon fas fa-key"></i>
+                <span class="nav-text">Password</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">
+                <i class="nav-icon fas fa-shield-alt"></i>
+                <span class="nav-text">Two-Factor Auth</span>
+                <span class="nav-badge info">Setup</span>
+            </NavLink>
+        </div>
+
+        @if (hasExternalLogins)
+        {
+            <div class="nav-item">
+                <NavLink class="nav-link" href="Account/Manage/ExternalLogins">
+                    <i class="nav-icon fas fa-link"></i>
+                    <span class="nav-text">External Logins</span>
+                </NavLink>
+            </div>
+        }
+    </div>
+
+    <!-- Data & Privacy Section -->
+    <div class="nav-section">
+        <div class="nav-section-title">Data & Privacy</div>
+
+        <div class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage/PersonalData">
+                <i class="nav-icon fas fa-database"></i>
+                <span class="nav-text">Personal Data</span>
+            </NavLink>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="/" class="quick-action-btn">
+            <i class="fas fa-home"></i>
+            <span>Back to App</span>
+        </a>
+
+        <form action="/Account/Logout" method="post" class="d-inline w-100">
+            <input type="hidden" name="ReturnUrl" value="/" />
+            <button type="submit" class="quick-action-btn danger">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sign Out</span>
+            </button>
+        </form>
+    </div>
+</nav>
 
 @code {
     private bool hasExternalLogins;
