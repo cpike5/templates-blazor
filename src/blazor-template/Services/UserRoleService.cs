@@ -7,62 +7,99 @@ namespace BlazorTemplate.Services
     public interface IUserRoleService
     {
         Task<IEnumerable<ApplicationUser>> GetUsersAsync();
-        Task<IEnumerable<string>> GetUserRolesAsync(string email);
+        Task<IEnumerable<string>> GetUserRolesAsync(string? email);
         Task AddUserToRoleAsync(string email, string roleName);
+        Task RemoveUserFromRoleAsync(string email, string roleName);
     }
 
     public class UserRoleService : IUserRoleService
     {
         private readonly ILogger<UserRoleService> _logger;
-        private readonly ApplicationDbContext _db;
+        private readonly IServiceProvider _serviceProvider;
 
-        public UserRoleService(ILogger<UserRoleService> logger, ApplicationDbContext db)
+        public UserRoleService(ILogger<UserRoleService> logger, IServiceProvider serviceProvider)
         {
             _logger = logger;
-            _db = db;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<IEnumerable<ApplicationUser>> GetUsersAsync()
         {
-            var users = _db.Users.ToList();
-            return await Task.FromResult(users);
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var users = await db.Users.ToListAsync();
+            return users;
         }
 
         public async Task AddUserToRoleAsync(string email, string roleName)
         {
-            var user = _db.Users.FirstOrDefault(u => u.Email == email);
-            var role = _db.Roles.FirstOrDefault(r => r.Name == roleName);
-            if (user != null && role != null && !_db.UserRoles.Any(usr => usr.UserId == user.Id && usr.RoleId == role.Id))
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+
+            if (user != null && role != null && !await db.UserRoles.AnyAsync(usr => usr.UserId == user.Id && usr.RoleId == role.Id))
             {
                 _logger.LogDebug("Adding user {Email} to role {RoleName}", email, roleName);
-                _db.UserRoles.Add(new IdentityUserRole<string>
+                db.UserRoles.Add(new IdentityUserRole<string>
                 {
                     RoleId = role.Id,
                     UserId = user.Id
                 });
+                await db.SaveChangesAsync();
             }
-            await _db.SaveChangesAsync();
         }
 
         public async Task RemoveUserFromRoleAsync(string email, string roleName)
         {
-            var user = _db.Users.FirstOrDefault(u => u.Email == email) ?? throw new ArgumentException("Invalid user");
-            var role = _db.Roles.FirstOrDefault(r => r.Name == roleName) ?? throw new ArgumentException("Invalid role");
-            var userRole = _db.UserRoles.FirstOrDefault(userRole => userRole.UserId == user.Id && userRole.RoleId == role.Id) ?? throw new ArgumentException("User not assigned to role");
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                throw new ArgumentException("Invalid user");
+
+            var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            if (role == null)
+                throw new ArgumentException("Invalid role");
+
+            var userRole = await db.UserRoles.FirstOrDefaultAsync(userRole => userRole.UserId == user.Id && userRole.RoleId == role.Id);
+            if (userRole == null)
+                throw new ArgumentException("User not assigned to role");
+
             _logger.LogDebug("Removing user {Email} from role {RoleName}", email, roleName);
-            _db.UserRoles.Remove(userRole);
-            await _db.SaveChangesAsync();
+            db.UserRoles.Remove(userRole);
+            await db.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<string>> GetUserRolesAsync(string email)
+        public async Task<IEnumerable<string>> GetUserRolesAsync(string? email)
         {
-            var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == email) ?? throw new ArgumentException("Invalid User");
-            var roles = await _db.UserRoles
-                .Where(ur => ur.UserId == user.Id)
-                .Join(_db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-                .ToListAsync();
+            if (string.IsNullOrEmpty(email))
+                return new List<string>();
 
-            return roles;
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
+            {
+                var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                    return new List<string>();
+
+                var roles = await db.UserRoles
+                    .Where(ur => ur.UserId == user.Id)
+                    .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
+                    .ToListAsync();
+
+                return roles;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error retrieving roles for user {Email}", email);
+                return new List<string>();
+            }
         }
     }
 }
