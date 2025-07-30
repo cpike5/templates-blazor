@@ -19,31 +19,300 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
 
-<PageTitle>Register</PageTitle>
+@layout BlazorTemplate.Components.Account.Shared.AccountLayout
 
-<StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
+<PageTitle>Complete Registration</PageTitle>
 
-<div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</div>
+<style>
+    .external-login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, var(--color-light) 0%, #f8f9fa 100%);
+    }
 
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" />
+    .external-login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 600px;
+        width: 100%;
+        border: none;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        border: none;
+    }
+
+    .provider-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 2.5rem;
+    }
+
+    .success-info {
+        background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+        border: 2px solid var(--color-success);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .success-icon {
+        color: var(--color-success);
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .success-title {
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .success-text {
+        color: #155724;
+        margin-bottom: 0;
+    }
+
+    .provider-name {
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
+    .form-section {
+        margin-top: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-floating > .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem 0.75rem;
+        height: 58px;
+        transition: all 0.3s ease;
+    }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb, 120, 39, 137), 0.25);
+        }
+
+        .form-floating > .form-control.is-valid {
+            border-color: var(--color-success);
+        }
+
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+        color: #6c757d;
+    }
+
+    .btn-complete {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 1.5rem;
+        color: white;
+    }
+
+        .btn-complete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 120, 39, 137), 0.3);
+            color: white;
+        }
+
+        .btn-complete:disabled {
+            transform: none;
+            opacity: 0.7;
+        }
+
+    .validation-message {
+        color: var(--color-danger);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .valid-feedback {
+        color: var(--color-success);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .back-link {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+        .back-link a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .back-link a:hover {
+                color: var(--color-secondary);
+            }
+
+    .email-note {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+        .email-note i {
+            margin-right: 0.5rem;
+        }
+
+    @@media (max-width: 768px) {
+        .external-login-container
+
+    {
+        padding: 1rem;
+    }
+
+    .card-header {
+        padding: 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .provider-icon {
+        font-size: 2.5rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+    }
+
+    }
+</style>
+
+<div class="external-login-container">
+    <div class="external-login-card">
+        <!-- Header -->
+        <div class="card-header">
+            <div class="provider-icon">
+                <i class="@GetProviderIcon()" id="providerIcon"></i>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
+            <h1 class="card-title">Complete Your Registration</h1>
+            <p class="card-subtitle">Almost there! Just one more step to get started.</p>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body">
+            <!-- Status Message -->
+            <StatusMessage Message="@message" />
+
+            <!-- Success Info -->
+            <div class="success-info">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="success-title">Authentication Successful!</div>
+                <p class="success-text">
+                    You've successfully authenticated with <span class="provider-name">@ProviderDisplayName</span>.
+                    Please confirm your email address below to complete your account setup.
+                </p>
+            </div>
+
+            <!-- Form Section -->
+            <div class="form-section">
+                <h2 class="section-title">Confirm Your Email</h2>
+                <p class="section-subtitle">
+                    We've pre-filled your email from your @ProviderDisplayName account.
+                    Please verify it's correct and click Register to complete your account.
+                </p>
+
+                <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" role="alert" />
+
+                    <div class="form-floating">
+                        <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
+                        <label for="email" class="form-label">Email Address</label>
+                        <ValidationMessage For="() => Input.Email" class="validation-message" />
+                    </div>
+
+                    <button type="submit" class="btn btn-complete" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            <span>Completing Registration...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-user-check me-2"></i>
+                            <span>Complete Registration</span>
+                        }
+                    </button>
+
+                    <div class="email-note">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> A confirmation email will be sent to verify your email address.
+                        You may need to check your spam folder.
+                    </div>
+                </EditForm>
+            </div>
+
+            <!-- Back Link -->
+            <div class="back-link">
+                <a href="Account/Login">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Login
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -52,6 +321,7 @@
 
     private string? message;
     private ExternalLoginInfo externalLoginInfo = default!;
+    private bool isSubmitting = false;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -68,7 +338,7 @@
     [SupplyParameterFromQuery]
     private string? Action { get; set; }
 
-    private string? ProviderDisplayName => externalLoginInfo.ProviderDisplayName;
+    private string? ProviderDisplayName => externalLoginInfo?.ProviderDisplayName;
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,41 +400,70 @@
 
     private async Task OnValidSubmitAsync()
     {
-        var emailStore = GetEmailStore();
-        var user = CreateUser();
+        isSubmitting = true;
+        StateHasChanged();
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-
-        var result = await UserManager.CreateAsync(user);
-        if (result.Succeeded)
+        try
         {
-            result = await UserManager.AddLoginAsync(user, externalLoginInfo);
+            var emailStore = GetEmailStore();
+            var user = CreateUser();
+
+            await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+            await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+            var result = await UserManager.CreateAsync(user);
             if (result.Succeeded)
             {
-                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
-
-                var userId = await UserManager.GetUserIdAsync(user);
-                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
-                if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                result = await UserManager.AddLoginAsync(user, externalLoginInfo);
+                if (result.Succeeded)
                 {
-                    RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
+
+                    var userId = await UserManager.GetUserIdAsync(user);
+                    var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                        NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                        new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+                    await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+
+                    // If account confirmation is required, we need to show the link if we don't have a real email sender
+                    if (UserManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
+                    }
+
+                    await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
+                    RedirectManager.RedirectTo(ReturnUrl);
                 }
-
-                await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
-                RedirectManager.RedirectTo(ReturnUrl);
             }
-        }
 
-        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+            message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetProviderIcon()
+    {
+        if (externalLoginInfo?.LoginProvider == null)
+            return "fas fa-user";
+
+        return externalLoginInfo.LoginProvider.ToLower() switch
+        {
+            "google" => "fab fa-google",
+            "microsoft" => "fab fa-microsoft",
+            "github" => "fab fa-github",
+            "facebook" => "fab fa-facebook",
+            "twitter" => "fab fa-twitter",
+            "linkedin" => "fab fa-linkedin",
+            "apple" => "fab fa-apple",
+            _ => "fas fa-user"
+        };
     }
 
     private ApplicationUser CreateUser()
