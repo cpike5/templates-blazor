@@ -1,0 +1,781 @@
+﻿@page "/admin/roles"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Data
+@layout MainLayout
+
+<style>
+    .admin-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .admin-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .admin-info h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .admin-info p {
+        margin: 0.25rem 0 0 0;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .admin-actions {
+        margin-left: auto;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+        .stat-icon.total {
+            color: var(--color-info);
+        }
+
+        .stat-icon.system {
+            color: var(--color-primary);
+        }
+
+        .stat-icon.custom {
+            color: var(--color-success);
+        }
+
+        .stat-icon.assignments {
+            color: var(--color-warning);
+        }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .roles-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .search-filter-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        min-width: 250px;
+        padding: 0.5rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.875rem;
+    }
+
+        .search-input:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(120, 39, 137, 0.25);
+        }
+
+    .filter-dropdown {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        font-size: 0.875rem;
+        min-width: 120px;
+    }
+
+    .roles-table {
+        width: 100%;
+        margin: 0;
+    }
+
+        .roles-table th {
+            background: #f8f9fa;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--color-dark);
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
+        }
+
+        .roles-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .roles-table tbody tr:hover {
+            background-color: rgba(120, 39, 137, 0.05);
+        }
+
+    .role-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .role-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+        .role-icon.administrator {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .role-icon.manager {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .role-icon.user {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .role-icon.custom {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        }
+
+    .role-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 1rem;
+    }
+
+    .role-details small {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+    .role-type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .role-type-badge.system {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-type-badge.custom {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+    .user-count {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .user-avatars {
+        display: flex;
+        margin-left: 0.5rem;
+    }
+
+    .user-avatar-sm {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border: 2px solid white;
+        margin-left: -8px;
+    }
+
+        .user-avatar-sm:first-child {
+            margin-left: 0;
+        }
+
+    .more-users {
+        background: #6c757d;
+        color: white;
+    }
+
+    .permissions-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        max-width: 200px;
+    }
+
+    .permission-tag {
+        padding: 0.125rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-view {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+        .btn-view:hover {
+            background: #c8e6c9;
+            color: #1b5e20;
+        }
+
+    .btn-edit {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+        .btn-edit:hover {
+            background: #bbdefb;
+            color: #1565c0;
+        }
+
+    .btn-users {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+        .btn-users:hover {
+            background: #e1bee7;
+            color: #6a1b9a;
+        }
+
+    .btn-danger {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+        .btn-danger:hover {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .table-pagination {
+        padding: 1.5rem;
+        border-top: 2px solid #e9ecef;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #dee2e6;
+        background: white;
+        color: var(--color-dark);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+    .system-role-notice {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .admin-header
+
+    {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .admin-actions {
+        margin-left: 0;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .search-filter-bar {
+        flex-direction: column;
+    }
+
+    .search-input {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .roles-table {
+        font-size: 0.8rem;
+    }
+
+        .roles-table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .permissions-preview {
+        display: none;
+    }
+
+    }
+</style>
+
+<!-- Page Header -->
+<div class="admin-header">
+    <div class="admin-icon">
+        <i class="fas fa-user-shield"></i>
+    </div>
+    <div class="admin-info">
+        <h2>Role Management</h2>
+        <p>Manage system roles and permissions</p>
+    </div>
+    <div class="admin-actions">
+        <button class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            Create New Role
+        </button>
+    </div>
+</div>
+
+<!-- System Role Notice -->
+<div class="system-role-notice">
+    <i class="fas fa-info-circle"></i>
+    <span><strong>Note:</strong> System roles (Administrator, User) are built-in and cannot be deleted. You can modify permissions but exercise caution with critical roles.</span>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon total">
+            <i class="fas fa-user-tag"></i>
+        </div>
+        <div class="stat-value">4</div>
+        <p class="stat-label">Total Roles</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon system">
+            <i class="fas fa-cog"></i>
+        </div>
+        <div class="stat-value">2</div>
+        <p class="stat-label">System Roles</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon custom">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-value">2</div>
+        <p class="stat-label">Custom Roles</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon assignments">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">28</div>
+        <p class="stat-label">Total Assignments</p>
+    </div>
+</div>
+
+<!-- Roles Table Section -->
+<div class="roles-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="fas fa-list me-2"></i>
+            All Roles
+        </h3>
+        <div class="search-filter-bar">
+            <input type="text" class="search-input" placeholder="Search roles..." />
+            <select class="filter-dropdown">
+                <option value="">All Types</option>
+                <option value="system">System Roles</option>
+                <option value="custom">Custom Roles</option>
+            </select>
+        </div>
+    </div>
+
+    <table class="roles-table">
+        <thead>
+            <tr>
+                <th>Role</th>
+                <th>Type</th>
+                <th>Users</th>
+                <th>Permissions</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="role-info">
+                        <div class="role-icon administrator">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="role-details">
+                            <h6>Administrator</h6>
+                            <small>Full system access and control</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="role-type-badge system">System</span>
+                </td>
+                <td>
+                    <div class="user-count">
+                        <span>1</span>
+                        <div class="user-avatars">
+                            <div class="user-avatar-sm">SA</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="permissions-preview">
+                        <span class="permission-tag">All Permissions</span>
+                    </div>
+                </td>
+                <td>
+                    <small>System Default</small>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view">
+                            <i class="fas fa-eye"></i>
+                            View
+                        </button>
+                        <button class="btn-action btn-users">
+                            <i class="fas fa-users"></i>
+                            Users
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="role-info">
+                        <div class="role-icon user">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="role-details">
+                            <h6>User</h6>
+                            <small>Standard user access</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="role-type-badge system">System</span>
+                </td>
+                <td>
+                    <div class="user-count">
+                        <span>20</span>
+                        <div class="user-avatars">
+                            <div class="user-avatar-sm">JD</div>
+                            <div class="user-avatar-sm">MW</div>
+                            <div class="user-avatar-sm">AB</div>
+                            <div class="user-avatar-sm more-users">+17</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="permissions-preview">
+                        <span class="permission-tag">Read</span>
+                        <span class="permission-tag">Profile</span>
+                        <span class="permission-tag">Basic</span>
+                    </div>
+                </td>
+                <td>
+                    <small>System Default</small>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view">
+                            <i class="fas fa-eye"></i>
+                            View
+                        </button>
+                        <button class="btn-action btn-users">
+                            <i class="fas fa-users"></i>
+                            Users
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="role-info">
+                        <div class="role-icon manager">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="role-details">
+                            <h6>Manager</h6>
+                            <small>Team management capabilities</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="role-type-badge custom">Custom</span>
+                </td>
+                <td>
+                    <div class="user-count">
+                        <span>5</span>
+                        <div class="user-avatars">
+                            <div class="user-avatar-sm">JS</div>
+                            <div class="user-avatar-sm">RB</div>
+                            <div class="user-avatar-sm">KL</div>
+                            <div class="user-avatar-sm more-users">+2</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="permissions-preview">
+                        <span class="permission-tag">Read</span>
+                        <span class="permission-tag">Write</span>
+                        <span class="permission-tag">Manage</span>
+                        <span class="permission-tag">Reports</span>
+                    </div>
+                </td>
+                <td>
+                    <small>Jan 10, 2024</small>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view">
+                            <i class="fas fa-eye"></i>
+                            View
+                        </button>
+                        <button class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                        <button class="btn-action btn-users">
+                            <i class="fas fa-users"></i>
+                            Users
+                        </button>
+                        <button class="btn-action btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="role-info">
+                        <div class="role-icon custom">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="role-details">
+                            <h6>Viewer</h6>
+                            <small>Read-only access to specific areas</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="role-type-badge custom">Custom</span>
+                </td>
+                <td>
+                    <div class="user-count">
+                        <span>2</span>
+                        <div class="user-avatars">
+                            <div class="user-avatar-sm">TH</div>
+                            <div class="user-avatar-sm">GF</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="permissions-preview">
+                        <span class="permission-tag">Read</span>
+                        <span class="permission-tag">View Reports</span>
+                    </div>
+                </td>
+                <td>
+                    <small>Jan 15, 2024</small>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-view">
+                            <i class="fas fa-eye"></i>
+                            View
+                        </button>
+                        <button class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                        <button class="btn-action btn-users">
+                            <i class="fas fa-users"></i>
+                            Users
+                        </button>
+                        <button class="btn-action btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="table-pagination">
+        <div class="pagination-info">
+            Showing 1-4 of 4 roles
+        </div>
+        <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn" disabled>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Mock data and component logic will go here later
+}

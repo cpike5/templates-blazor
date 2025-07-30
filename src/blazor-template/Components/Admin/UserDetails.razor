@@ -1,0 +1,891 @@
+﻿@page "/admin/users/{UserId}"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Data
+@layout MainLayout
+
+<style>
+    .user-details-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .breadcrumb-nav {
+        margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+
+    .breadcrumb-item.active {
+        color: var(--color-dark);
+        font-weight: 600;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    /* User Header */
+    .user-header {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .user-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.75rem;
+        font-weight: 600;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .status-indicator {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 3px solid white;
+        background: var(--color-success);
+    }
+
+    .user-basic-info {
+        flex: 1;
+    }
+
+        .user-basic-info h1 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+
+    .user-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+        .meta-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+    .user-badges {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.locked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+    .role-badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .role-badge.user {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .role-badge.manager {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .role-badge.administrator {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+    .user-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    /* Content Layout */
+    .content-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Section Cards */
+    .section-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-body {
+        padding: 1.5rem;
+    }
+
+    /* Form Styling */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: white;
+    }
+
+        .form-control:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(120, 39, 137, 0.1);
+        }
+
+        .form-control:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+    .form-help {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.375rem;
+        line-height: 1.4;
+    }
+
+    /* Role Assignment */
+    .role-assignment {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .role-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+        .role-item:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(120, 39, 137, 0.1);
+        }
+
+        .role-item.assigned {
+            border-color: var(--color-success);
+            background: #f8fff9;
+        }
+
+    .role-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .role-icon-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+        .role-icon-sm.administrator {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .role-icon-sm.manager {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .role-icon-sm.user {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+    .role-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .role-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+
+    .role-toggle {
+        width: 48px;
+        height: 24px;
+        background: #dee2e6;
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        outline: none;
+    }
+
+        .role-toggle.active {
+            background: var(--color-success);
+        }
+
+        .role-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .role-toggle.active::after {
+            transform: translateX(24px);
+        }
+
+    /* Sidebar Components */
+    .status-section {
+        padding: 1.5rem;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .status-label {
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .status-value {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+        .status-value.success {
+            color: var(--color-success);
+        }
+
+        .status-value.warning {
+            color: #f39c12;
+        }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+    }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+        .activity-icon.login {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .activity-icon.logout {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .activity-icon.update {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+    .activity-details {
+        flex: 1;
+    }
+
+        .activity-details h6 {
+            margin: 0 0 0.25rem 0;
+            font-weight: 600;
+            color: var(--color-dark);
+            font-size: 0.875rem;
+        }
+
+        .activity-details small {
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+
+    .activity-time {
+        color: #6c757d;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    /* Danger Zone */
+    .danger-zone {
+        border-color: #f8d7da;
+    }
+
+        .danger-zone .section-header {
+            background: rgba(248, 215, 218, 0.3);
+            border-bottom-color: #f8d7da;
+        }
+
+        .danger-zone .section-icon {
+            background: linear-gradient(135deg, var(--color-danger), #dc3545);
+        }
+
+    .danger-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .danger-action {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid #f8d7da;
+        border-radius: 8px;
+        background: rgba(248, 215, 218, 0.1);
+    }
+
+    .danger-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: var(--color-danger);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .danger-info small {
+        color: #721c24;
+        font-size: 0.75rem;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1200px) {
+        .content-layout
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar-content {
+        order: -1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .user-details-container
+
+    {
+        padding: 0 0.5rem;
+    }
+
+    .user-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .user-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .user-meta {
+        justify-content: center;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .section-body {
+        padding: 1rem;
+    }
+
+    .sidebar-content {
+        grid-template-columns: 1fr;
+    }
+
+    }
+
+    @@media (max-width: 576px) {
+        .user-actions
+
+    {
+        flex-direction: column;
+    }
+
+    .user-actions .btn {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="user-details-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-nav">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
+            <li class="breadcrumb-item active">John Doe</li>
+        </ol>
+    </nav>
+
+    <!-- User Header -->
+    <div class="user-header">
+        <div class="user-avatar-large">
+            JD
+            <div class="status-indicator"></div>
+        </div>
+        <div class="user-basic-info">
+            <h1>John Doe</h1>
+            <div class="user-meta">
+                <div class="meta-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>john.doe@company.com</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>Member since Jan 3, 2024</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Last login: Jan 14, 4:45 PM</span>
+                </div>
+            </div>
+            <div class="user-badges">
+                <span class="status-badge active">
+                    <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                    Active
+                </span>
+                <span class="role-badge user">User</span>
+            </div>
+        </div>
+        <div class="user-actions">
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-envelope me-1"></i>
+                Send Email
+            </button>
+            <button class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Content Layout -->
+    <div class="content-layout">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Profile Information -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <h3 class="section-title">Profile Information</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" value="John" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" value="Doe" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" value="john.doe@company.com" disabled />
+                        <div class="form-help">Email address cannot be changed directly. User must verify new email.</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" value="+1 (555) 123-4567" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department</label>
+                            <select class="form-control">
+                                <option selected>Engineering</option>
+                                <option>Marketing</option>
+                                <option>Sales</option>
+                                <option>Support</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Assignment -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <h3 class="section-title">Role Assignment</h3>
+                </div>
+                <div class="section-body">
+                    <div class="role-assignment">
+                        <div class="role-item assigned">
+                            <div class="role-info">
+                                <div class="role-icon-sm user">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="role-details">
+                                    <h6>User</h6>
+                                    <small>Standard user access</small>
+                                </div>
+                            </div>
+                            <button class="role-toggle active"></button>
+                        </div>
+                        <div class="role-item">
+                            <div class="role-info">
+                                <div class="role-icon-sm manager">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="role-details">
+                                    <h6>Manager</h6>
+                                    <small>Team management capabilities</small>
+                                </div>
+                            </div>
+                            <button class="role-toggle"></button>
+                        </div>
+                        <div class="role-item">
+                            <div class="role-info">
+                                <div class="role-icon-sm administrator">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="role-details">
+                                    <h6>Administrator</h6>
+                                    <small>Full system access and control</small>
+                                </div>
+                            </div>
+                            <button class="role-toggle"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="sidebar-content">
+            <!-- Account Status -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <h3 class="section-title">Account Status</h3>
+                </div>
+                <div class="status-section">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Account Status</div>
+                            <select class="form-control">
+                                <option selected>Active</option>
+                                <option>Locked</option>
+                                <option>Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Email Verified</div>
+                            <div class="status-value success">
+                                <i class="fas fa-check-circle"></i>
+                                Verified
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">
+                            Resend Verification
+                        </button>
+                    </div>
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Two-Factor Authentication</div>
+                            <div class="status-value warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Not Enabled
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">
+                            Force Enable
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="section-title">Recent Activity</h3>
+                </div>
+                <div class="section-body">
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon login">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                            <div class="activity-details">
+                                <h6>User logged in</h6>
+                                <small>From 192.168.1.100</small>
+                            </div>
+                            <div class="activity-time">2h ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon update">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="activity-details">
+                                <h6>Profile updated</h6>
+                                <small>Phone number changed</small>
+                            </div>
+                            <div class="activity-time">1d ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                            <div class="activity-details">
+                                <h6>User logged out</h6>
+                                <small>Session expired</small>
+                            </div>
+                            <div class="activity-time">2d ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="section-card danger-zone">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="section-title">Danger Zone</h3>
+                </div>
+                <div class="section-body">
+                    <div class="danger-actions">
+                        <div class="danger-action">
+                            <div class="danger-info">
+                                <h6>Lock Account</h6>
+                                <small>Prevent user from logging in</small>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm">
+                                Lock Account
+                            </button>
+                        </div>
+                        <div class="danger-action">
+                            <div class="danger-info">
+                                <h6>Reset Password</h6>
+                                <small>Force user to create new password</small>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm">
+                                Reset Password
+                            </button>
+                        </div>
+                        <div class="danger-action">
+                            <div class="danger-info">
+                                <h6>Delete Account</h6>
+                                <small>Permanently remove user account</small>
+                            </div>
+                            <button class="btn btn-danger btn-sm">
+                                Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+
+    // Mock data and component logic will go here later
+}
