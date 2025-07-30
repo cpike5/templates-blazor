@@ -1,0 +1,62 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<!-- Top Navigation Bar -->
+<nav class="top-navbar">
+    <button class="sidebar-toggle" id="sidebarToggle" type="button">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="/" class="app-brand">
+        <i class="fas fa-cube"></i>
+        <span>@AppName</span>
+    </a>
+
+    <div class="user-info">
+        <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="user-avatar">@GetUserInitials()</div>
+            <div class="user-details">
+                <div class="user-name">@CurrentUser.Name</div>
+                <div class="user-role">@CurrentUser.Role</div>
+            </div>
+            <i class="fas fa-chevron-down ms-2" style="font-size: 0.75rem; color: #6c757d;"></i>
+        </div>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>My Profile</a></li>
+            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
+            <li><a class="dropdown-item" href="/notifications"><i class="fas fa-bell me-2"></i>Notifications</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign Out</a></li>
+        </ul>
+    </div>
+</nav>
+
+@code {
+    [Parameter] public string AppName { get; set; } = "Your App";
+
+    // You would typically inject these services or get them from authentication
+    private UserInfo CurrentUser = new UserInfo
+    {
+        Name = "John Doe",
+        Role = "Administrator"
+    };
+
+    private string GetUserInitials()
+    {
+        if (string.IsNullOrEmpty(CurrentUser.Name))
+            return "U";
+
+        var parts = CurrentUser.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        }
+        return parts[0][0].ToString().ToUpper();
+    }
+
+    private class UserInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+    }
+}

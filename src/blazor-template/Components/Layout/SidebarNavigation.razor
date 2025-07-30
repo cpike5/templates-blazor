@@ -1,0 +1,68 @@
+﻿@using BlazorTemplate.Configuration.Navigation
+@using BlazorTemplate.Services
+@using BlazorTemplate.Configuration
+@using Microsoft.AspNetCore.Components.Authorization
+@inject INavigationService NavigationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<!-- Sidebar Navigation -->
+<nav class="sidebar" id="sidebar">
+    @if (navigationItems != null)
+    {
+        @foreach (var item in navigationItems)
+        {
+            @if (item.IsGroup)
+            {
+                <div class="nav-section">
+                    <div class="nav-section-title">@item.Title</div>
+                    @foreach (var child in item.Children)
+                    {
+                        <div class="nav-item">
+                            <NavLink href="@child.Href" class="nav-link" Match="@GetNavLinkMatch(child.Href)">
+                                <i class="@child.Icon"></i>
+                                <span class="nav-link-text">@child.Title</span>
+                            </NavLink>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="nav-section">
+                    <div class="nav-item">
+                        <NavLink href="@item.Href" class="nav-link" Match="@GetNavLinkMatch(item.Href)">
+                            <i class="@item.Icon"></i>
+                            <span class="nav-link-text">@item.Title</span>
+                        </NavLink>
+                    </div>
+                </div>
+            }
+        }
+    }
+</nav>
+
+@code {
+    private List<NavigationItem>? navigationItems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userRoles = authState.User.Claims
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+
+        // If user is not authenticated, add "Anonymous" role
+        if (!authState.User.Identity?.IsAuthenticated ?? true)
+        {
+            userRoles.Add("Anonymous");
+        }
+
+        navigationItems = await NavigationService.GetNavigationItemsForUserAsync(userRoles);
+    }
+
+    private NavLinkMatch GetNavLinkMatch(string? href)
+    {
+        return href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+    }
+}

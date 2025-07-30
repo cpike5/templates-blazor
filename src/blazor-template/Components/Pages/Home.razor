@@ -1,0 +1,69 @@
+﻿@page "/"
+@using BlazorTemplate.Components.Layout
+@layout MainLayout
+
+<ContentPage Title="Dashboard" Subtitle="Welcome back! Here's an overview of your application.">
+    
+    <!-- Main content goes here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-code" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
+                    <h4>Ready for Your Content</h4>
+                    <p class="text-muted">This is your main content area. Replace this with your Blazor components and application content.</p>
+                    <button class="btn btn-primary" @onclick="OnGetStartedClick">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Example of additional content sections -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Analytics
+                    </h5>
+                    <p class="card-text">View your application metrics and performance data.</p>
+                    <a href="/analytics" class="btn btn-outline-primary btn-sm">View Analytics</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users text-success me-2"></i>
+                        Users
+                    </h5>
+                    <p class="card-text">Manage user accounts and permissions.</p>
+                    <a href="/users" class="btn btn-outline-success btn-sm">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-cog text-warning me-2"></i>
+                        Settings
+                    </h5>
+                    <p class="card-text">Configure your application settings and preferences.</p>
+                    <a href="/settings" class="btn btn-outline-warning btn-sm">Open Settings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</ContentPage>
+
+@code {
+    private void OnGetStartedClick()
+    {
+        // Handle button click logic here
+        Console.WriteLine("Get Started button clicked!");
+    }
+}
