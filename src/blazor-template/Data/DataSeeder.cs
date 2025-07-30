@@ -11,7 +11,7 @@ namespace BlazorTemplate.Data
     {
         private readonly ILogger _logger;
         private readonly IServiceProvider services;
-        
+
         public DataSeeder(IServiceProvider serviceProvider)
         {
             services = serviceProvider;
@@ -33,10 +33,10 @@ namespace BlazorTemplate.Data
             {
                 var db = services.GetRequiredService<ApplicationDbContext>();
                 var config = services.GetRequiredService<IOptions<ConfigurationOptions>>();
-                
+
                 _logger.LogDebug("Seeding database");
 
-                foreach (var roleName in config.Value.UserRoles)
+                foreach (var roleName in config.Value.Administration.UserRoles)
                 {
                     if (!db.Roles.Any(role => role.Name == roleName))
                     {
@@ -44,11 +44,11 @@ namespace BlazorTemplate.Data
                         db.Roles.Add(new IdentityRole(roleName));
                     }
                 }
-                db.SaveChanges(); 
+                db.SaveChanges();
 
                 // Set the admin
-                var adminRole = db.Roles.SingleOrDefault(role => role.Name == "Administrator");
-                var adminUser = db.Users.SingleOrDefault(user => user.Email == config.Value.AdminEmail);
+                var adminRole = db.Roles.SingleOrDefault(role => role.Name == config.Value.Administration.AdministratorRole);
+                var adminUser = db.Users.SingleOrDefault(user => user.Email == config.Value.Administration.AdminEmail);
                 if (adminRole != null && adminUser != null && !db.UserRoles.Any(userRole => userRole.UserId == adminUser.Id && userRole.RoleId == adminRole.Id))
                 {
                     _logger.LogDebug("Adding admin user {Email} to Administrator role", adminUser.Email);
