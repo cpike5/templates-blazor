@@ -18,47 +18,366 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
+@layout BlazorTemplate.Components.Account.Shared.AccountLayout
+
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
+<style>
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, var(--color-light) 0%, #f8f9fa 100%);
+    }
 
-<div class="row">
-    <div class="col-md-4">
-        <StatusMessage Message="@Message" />
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+    .register-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        max-width: 1000px;
+        width: 100%;
+        border: none;
+    }
+
+    .register-brand {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .brand-logo {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .brand-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .brand-subtitle {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .register-form {
+        padding: 3rem 2rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-subtitle {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1.5rem;
+    }
+
+        .form-floating > .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem 0.75rem;
+            height: 58px;
+            transition: all 0.3s ease;
+        }
+
+            .form-floating > .form-control:focus {
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb, 120, 39, 137), 0.25);
+            }
+
+            .form-floating > .form-control.is-valid {
+                border-color: var(--color-success);
+            }
+
+            .form-floating > .form-control.is-invalid {
+                border-color: var(--color-danger);
+            }
+
+        .form-floating > label {
+            padding: 1rem 0.75rem;
+            color: #6c757d;
+        }
+
+    .password-strength {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .strength-meter {
+        height: 4px;
+        background: #e9ecef;
+        border-radius: 2px;
+        margin: 0.5rem 0;
+        overflow: hidden;
+    }
+
+    .strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+
+    .strength-weak .strength-fill {
+        width: 33%;
+        background: var(--color-danger);
+    }
+
+    .strength-medium .strength-fill {
+        width: 66%;
+        background: var(--color-warning);
+    }
+
+    .strength-strong .strength-fill {
+        width: 100%;
+        background: var(--color-success);
+    }
+
+    .btn-register {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 2rem;
+        color: white;
+    }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 120, 39, 137), 0.3);
+            color: white;
+        }
+
+        .btn-register:disabled {
+            transform: none;
+            opacity: 0.7;
+        }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+        color: #6c757d;
+    }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #dee2e6;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+            font-size: 0.875rem;
+        }
+
+    .external-login {
+        text-align: center;
+    }
+
+    .btn-external {
+        border: 2px solid #dee2e6;
+        background: white;
+        color: var(--color-dark);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+        .btn-external:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-external i {
+            margin-right: 0.5rem;
+        }
+
+    .register-links {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+        .register-links a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+            .register-links a:hover {
+                color: var(--color-secondary);
+            }
+
+    .status-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .validation-message {
+        color: var(--color-danger);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .valid-feedback {
+        color: var(--color-success);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    @@media (max-width: 768px) {
+        .register-container
+
+    {
+        padding: 1rem;
+    }
+
+    .register-brand {
+        padding: 2rem 1rem;
+    }
+
+    .register-form {
+        padding: 2rem 1rem;
+    }
+
+    .brand-logo {
+        font-size: 2.5rem;
+    }
+
+    .brand-title {
+        font-size: 1.5rem;
+    }
+
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="row g-0">
+            <!-- Brand Section -->
+            <div class="col-lg-5">
+                <div class="register-brand h-100 d-flex flex-column justify-content-center">
+                    <div class="brand-logo">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h1 class="brand-title">Join Us Today</h1>
+                    <p class="brand-subtitle">Create your account and get started in minutes</p>
+                </div>
             </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
+
+            <!-- Register Form Section -->
+            <div class="col-lg-7">
+                <div class="register-form">
+                    <h2 class="form-title">Create Account</h2>
+                    <p class="form-subtitle">Fill in your information to get started</p>
+
+                    <!-- Status Message (shown when there's an error) -->
+                    @if (!string.IsNullOrEmpty(Message))
+                    {
+                        <div class="status-message">
+                            @Message
+                        </div>
+                    }
+
+                    <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" @onkeyup="@OnFormKeyUp">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-floating">
+                            <InputText @bind-Value="Input.Email" class="form-control" id="email" autocomplete="username" aria-required="true" placeholder="name@example.com" @onblur="@OnEmailBlur" />
+                            <label for="email">Email Address</label>
+                            <ValidationMessage For="() => Input.Email" class="validation-message" />
+                            @if (emailValidationState == ValidationState.Valid)
+                            {
+                                <div class="valid-feedback">Email looks good!</div>
+                            }
+                        </div>
+
+                        <div class="form-floating">
+                            <InputText type="password" @bind-Value="Input.Password" class="form-control" id="password" autocomplete="new-password" aria-required="true" placeholder="password" @oninput="@OnPasswordInput" />
+                            <label for="password">Password</label>
+                            <div class="password-strength">
+                                <div class="strength-meter @GetStrengthClass()">
+                                    <div class="strength-fill"></div>
+                                </div>
+                                <div class="strength-text">Password strength: <span id="strengthText">@passwordStrengthText</span></div>
+                            </div>
+                            <ValidationMessage For="() => Input.Password" class="validation-message" />
+                        </div>
+
+                        <div class="form-floating">
+                            <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" id="confirmPassword" autocomplete="new-password" aria-required="true" placeholder="password" @oninput="@OnConfirmPasswordInput" />
+                            <label for="confirmPassword">Confirm Password</label>
+                            <ValidationMessage For="() => Input.ConfirmPassword" class="validation-message" />
+                            @if (confirmPasswordValidationState == ValidationState.Valid)
+                            {
+                                <div class="valid-feedback">Passwords match!</div>
+                            }
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-register" disabled="@isRegistering">
+                            @if (isRegistering)
+                            {
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span>Creating Account...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-user-plus me-2"></i>
+                                <span>Create Account</span>
+                            }
+                        </button>
+                    </EditForm>
+
+                    <div class="divider">
+                        <span>or sign up with</span>
+                    </div>
+
+                    <div class="external-login">
+                        <ExternalLoginPicker />
+                    </div>
+
+                    <div class="register-links">
+                        <p>Already have an account? <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Login", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Sign in here</a></p>
+                    </div>
+                </div>
             </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="confirm-password">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+        </div>
     </div>
 </div>
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
+    private bool isRegistering = false;
+    private string passwordStrengthText = "Enter a password";
+    private PasswordStrength passwordStrength = PasswordStrength.None;
+    private ValidationState emailValidationState = ValidationState.None;
+    private ValidationState confirmPasswordValidationState = ValidationState.None;
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -70,39 +389,130 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
-        var user = CreateUser();
+        isRegistering = true;
+        StateHasChanged();
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        var emailStore = GetEmailStore();
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-        var result = await UserManager.CreateAsync(user, Input.Password);
-
-        if (!result.Succeeded)
+        try
         {
-            identityErrors = result.Errors;
+            var user = CreateUser();
+
+            await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+            var emailStore = GetEmailStore();
+            await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+            var result = await UserManager.CreateAsync(user, Input.Password);
+
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
+
+            Logger.LogInformation("User created a new account with password.");
+
+            var userId = await UserManager.GetUserIdAsync(user);
+            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+            await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+
+            if (UserManager.Options.SignIn.RequireConfirmedAccount)
+            {
+                RedirectManager.RedirectTo(
+                    "Account/RegisterConfirmation",
+                    new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+            }
+
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        finally
+        {
+            isRegistering = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnEmailBlur()
+    {
+        if (!string.IsNullOrWhiteSpace(Input.Email))
+        {
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$");
+            emailValidationState = emailRegex.IsMatch(Input.Email) ? ValidationState.Valid : ValidationState.Invalid;
+        }
+        else
+        {
+            emailValidationState = ValidationState.None;
+        }
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e)
+    {
+        var password = e.Value?.ToString() ?? "";
+        CheckPasswordStrength(password);
+    }
+
+    private void OnConfirmPasswordInput(ChangeEventArgs e)
+    {
+        var confirmPassword = e.Value?.ToString() ?? "";
+        if (!string.IsNullOrWhiteSpace(confirmPassword) && !string.IsNullOrWhiteSpace(Input.Password))
+        {
+            confirmPasswordValidationState = Input.Password == confirmPassword ? ValidationState.Valid : ValidationState.Invalid;
+        }
+        else
+        {
+            confirmPasswordValidationState = ValidationState.None;
+        }
+    }
+
+    private void OnFormKeyUp(KeyboardEventArgs e)
+    {
+        // Handle any additional form interactions if needed
+    }
+
+    private void CheckPasswordStrength(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            passwordStrength = PasswordStrength.None;
+            passwordStrengthText = "Enter a password";
             return;
         }
 
-        Logger.LogInformation("User created a new account with password.");
+        int strength = 0;
+        if (password.Length >= 6) strength++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(password, @"[a-z]") && System.Text.RegularExpressions.Regex.IsMatch(password, @"[A-Z]")) strength++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(password, @"[0-9]")) strength++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(password, @"[^a-zA-Z0-9]")) strength++;
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
+        if (strength < 2)
         {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+            passwordStrength = PasswordStrength.Weak;
+            passwordStrengthText = "Weak";
         }
+        else if (strength < 4)
+        {
+            passwordStrength = PasswordStrength.Medium;
+            passwordStrengthText = "Medium";
+        }
+        else
+        {
+            passwordStrength = PasswordStrength.Strong;
+            passwordStrengthText = "Strong";
+        }
+    }
 
-        await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl);
+    private string GetStrengthClass()
+    {
+        return passwordStrength switch
+        {
+            PasswordStrength.Weak => "strength-weak",
+            PasswordStrength.Medium => "strength-medium",
+            PasswordStrength.Strong => "strength-strong",
+            _ => ""
+        };
     }
 
     private ApplicationUser CreateUser()
@@ -125,6 +535,21 @@
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
         return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private enum PasswordStrength
+    {
+        None,
+        Weak,
+        Medium,
+        Strong
+    }
+
+    private enum ValidationState
+    {
+        None,
+        Valid,
+        Invalid
     }
 
     private sealed class InputModel
