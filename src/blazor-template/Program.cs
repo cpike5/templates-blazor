@@ -78,7 +78,11 @@ namespace BlazorTemplate
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             // Seed the database
-            DataSeeder.SeedDatabase(scope.ServiceProvider);
+            if (Convert.ToBoolean(builder.Configuration["SetupMode"]))
+            {
+                DataSeeder.SeedDatabase(scope.ServiceProvider);
+            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
