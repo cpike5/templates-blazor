@@ -13,6 +13,10 @@ A Blazor Server template for rapid prototyping with authentication, role-based n
 - Serilog logging
 - First-time setup service with automatic database seeding
 
+## Live Demo
+
+Coming Soon
+
 ## Setup
 
 ### Initial Configuration
