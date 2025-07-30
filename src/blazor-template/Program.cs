@@ -2,13 +2,12 @@ using BlazorTemplate.Components;
 using BlazorTemplate.Components.Account;
 using BlazorTemplate.Configuration;
 using BlazorTemplate.Data;
+using BlazorTemplate.Extensions;
+using BlazorTemplate.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using BlazorTemplate.Extensions;
-using Microsoft.Extensions.Options;
-using BlazorTemplate.Services;
 
 namespace BlazorTemplate
 {
@@ -73,13 +72,13 @@ namespace BlazorTemplate
 
             var app = builder.Build();
 
+            using var scope = app.Services.CreateScope();
 
             // Get a reference to the DB Context
-            using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            // Get a logger 
-            _logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            SeedDatabase(scope.ServiceProvider);
+
+            // Seed the database
+            DataSeeder.SeedDatabase(scope.ServiceProvider);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -107,55 +106,6 @@ namespace BlazorTemplate
             app.Run();
         }
 
-        private static void SeedDatabase(IServiceProvider services)
-        {
-            try
-            {
-                var db = services.GetRequiredService<ApplicationDbContext>();
-                var config = services.GetRequiredService<IOptions<ConfigurationOptions>>();
 
-                _logger.LogDebug("Seeding database");
-                
-                foreach (var roleName in GetApplicationRoles())
-                {
-                    if (!db.Roles.Any(role => role.Name == roleName))
-                    {
-                        _logger.LogDebug("Adding missing database role: {RoleName}", roleName);
-                        db.Roles.Add(new IdentityRole(roleName));
-                    }
-                }
-
-                // Set the admin
-                var adminRole = db.Roles.SingleOrDefault(role => role.Name == "Administrator");
-                var adminUser = db.Users.SingleOrDefault(user => user.Email == config.Value.AdminEmail);
-                if (adminRole != null && adminUser != null && !db.UserRoles.Any(userRole => userRole.UserId == adminUser.Id && userRole.RoleId == adminRole.Id))
-                {
-                    _logger.LogDebug("Adding admin user {Email} to Administrator role", adminUser.Email);
-                    db.UserRoles.Add(new IdentityUserRole<string>
-                    {
-                        RoleId = adminRole.Id,
-                        UserId = adminUser.Id
-                    });
-                }
-
-                db.SaveChangesAsync();
-                _logger.LogTrace("Finished seeding database");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while attempting to seed database");
-            }
-        }
-
-        private static IEnumerable<string> GetApplicationRoles()
-        {
-            var roles = new List<string>()
-            {
-                "Administrator",
-                "User"
-            };
-
-            return roles;
-        }
     }
 }
