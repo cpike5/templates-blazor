@@ -1,7 +1,9 @@
 ﻿@page "/admin/users"
 @using BlazorTemplate.Components.Layout
 @using BlazorTemplate.Data
+@using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
+@attribute [Authorize(Roles = "Administrator")]
 
 <style>
     .admin-header {

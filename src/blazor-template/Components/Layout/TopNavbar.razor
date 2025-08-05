@@ -102,8 +102,8 @@
             }
         }
 
-        // Get current URL for logout redirect
-        currentUrl = Navigation.Uri;
+        // Get current URL path for logout redirect
+        currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
     }
 
     protected override async Task OnParametersSetAsync()

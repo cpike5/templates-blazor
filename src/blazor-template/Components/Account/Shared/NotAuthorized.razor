@@ -1,22 +1,19 @@
-﻿@page "/Account/AccessDenied"
 @inject NavigationManager NavigationManager
 
-<PageTitle>Access Denied</PageTitle>
-
-<div class="access-denied-container">
-    <div class="access-denied-card">
-        <div class="access-denied-icon">
+<div class="not-authorized-container">
+    <div class="not-authorized-card">
+        <div class="not-authorized-icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
             </svg>
         </div>
-        <h1 class="access-denied-title">Access Denied</h1>
-        <p class="access-denied-message">
-            You do not have permission to access this resource. If you believe this is an error, please contact your administrator.
+        <h1 class="not-authorized-title">Access Denied</h1>
+        <p class="not-authorized-message">
+            You don't have permission to access this page. Please contact your administrator if you believe this is an error.
         </p>
-        <div class="access-denied-actions">
-            <button class="btn btn-primary" @onclick="NavigateBack">
-                Go Back
+        <div class="not-authorized-actions">
+            <button class="btn btn-primary" @onclick="NavigateToLogin">
+                Sign In
             </button>
             <button class="btn btn-secondary" @onclick="NavigateHome">
                 Go Home
@@ -26,9 +23,9 @@
 </div>
 
 @code {
-    private void NavigateBack()
+    private void NavigateToLogin()
     {
-        NavigationManager.NavigateTo("javascript:history.back()", forceLoad: true);
+        NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
     }
 
     private void NavigateHome()
@@ -38,16 +35,16 @@
 }
 
 <style>
-    .access-denied-container {
+    .not-authorized-container {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--color-light) 0%, #dc3545 10%, var(--color-danger) 100%);
+        background: linear-gradient(135deg, var(--color-light) 0%, var(--color-info) 100%);
         padding: 2rem;
     }
 
-    .access-denied-card {
+    .not-authorized-card {
         background: white;
         border-radius: 16px;
         padding: 3rem 2rem;
@@ -58,24 +55,24 @@
         border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    .access-denied-icon {
+    .not-authorized-icon {
         width: 80px;
         height: 80px;
         margin: 0 auto 2rem;
-        color: white;
-        background: var(--color-danger);
+        color: var(--color-primary);
+        background: var(--color-info);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-        .access-denied-icon svg {
+        .not-authorized-icon svg {
             width: 40px;
             height: 40px;
         }
 
-    .access-denied-title {
+    .not-authorized-title {
         font-size: 2rem;
         font-weight: 700;
         color: var(--color-dark);
@@ -83,14 +80,14 @@
         letter-spacing: -0.025em;
     }
 
-    .access-denied-message {
+    .not-authorized-message {
         font-size: 1.125rem;
         color: var(--color-secondary);
         margin: 0 0 2.5rem 0;
         line-height: 1.6;
     }
 
-    .access-denied-actions {
+    .not-authorized-actions {
         display: flex;
         gap: 1rem;
         justify-content: center;
@@ -136,23 +133,23 @@
         }
 
     @@media (max-width: 640px) {
-        .access-denied-container {
+        .not-authorized-container {
             padding: 1rem;
         }
 
-        .access-denied-card {
+        .not-authorized-card {
             padding: 2rem 1.5rem;
         }
 
-        .access-denied-title {
+        .not-authorized-title {
             font-size: 1.75rem;
         }
 
-        .access-denied-message {
+        .not-authorized-message {
             font-size: 1rem;
         }
 
-        .access-denied-actions {
+        .not-authorized-actions {
             flex-direction: column;
         }
 

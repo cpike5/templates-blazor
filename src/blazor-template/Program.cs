@@ -76,6 +76,11 @@ namespace BlazorTemplate
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+            // Add Authorization services
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy("AdminOnly", policy => policy.RequireRole("Administrator"))
+                .AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Administrator"));
+
             if (firstTimeSetup)
             {
                 builder.Services.AddFirstTimeSetupServices(builder.Configuration);
@@ -110,6 +115,9 @@ namespace BlazorTemplate
 
             app.UseStaticFiles();
             app.UseAntiforgery();
+            
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
