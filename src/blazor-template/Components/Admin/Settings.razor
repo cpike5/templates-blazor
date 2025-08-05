@@ -1,0 +1,990 @@
+﻿@page "/admin/settings"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Data
+@layout MainLayout
+
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .breadcrumb-nav {
+        margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb-item a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--color-dark);
+        font-weight: 600;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .settings-header {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .settings-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .settings-info h1 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .settings-info p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .settings-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .settings-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .settings-sidebar {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 2rem;
+    }
+
+    .sidebar-header {
+        background: #f8f9fa;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .sidebar-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .settings-nav {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-item {
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .nav-item:last-child {
+        border-bottom: none;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+        background: rgba(120, 39, 137, 0.05);
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .nav-icon {
+        width: 20px;
+        text-align: center;
+        font-size: 0.875rem;
+    }
+
+    .settings-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .settings-section {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+    }
+
+    .section-body {
+        padding: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: white;
+    }
+
+    .form-control:focus {
+        border-color: var(--color-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(120, 39, 137, 0.1);
+    }
+
+    .form-help {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.375rem;
+        line-height: 1.4;
+    }
+
+    .form-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+    .form-switch:last-child {
+        margin-bottom: 0;
+    }
+
+    .switch-info {
+        flex: 1;
+    }
+
+    .switch-title {
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0 0 0.25rem 0;
+        font-size: 0.875rem;
+    }
+
+    .switch-desc {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .toggle-switch {
+        width: 48px;
+        height: 24px;
+        background: #dee2e6;
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        outline: none;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch.active {
+        background: var(--color-success);
+    }
+
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.active::after {
+        transform: translateX(24px);
+    }
+
+    .color-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 0.75rem;
+        max-width: 400px;
+    }
+
+    .color-option {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .color-option.selected {
+        border-color: var(--color-primary);
+        transform: scale(1.05);
+    }
+
+    .color-option.primary { background: linear-gradient(135deg, #7827AD, #9B59B6); }
+    .color-option.blue { background: linear-gradient(135deg, #3498DB, #2980B9); }
+    .color-option.green { background: linear-gradient(135deg, #27AE60, #229954); }
+    .color-option.red { background: linear-gradient(135deg, #E74C3C, #C0392B); }
+    .color-option.orange { background: linear-gradient(135deg, #F39C12, #E67E22); }
+    .color-option.purple { background: linear-gradient(135deg, #8E44AD, #7D3C98); }
+
+    .color-option::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .color-option.selected::after {
+        opacity: 1;
+    }
+
+    .email-template-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .template-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .template-item:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px rgba(120, 39, 137, 0.1);
+    }
+
+    .template-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .template-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--color-primary);
+    }
+
+    .template-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .template-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .template-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-right: 0.75rem;
+    }
+
+    .template-status.enabled {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .template-status.disabled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .backup-schedule {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .day-toggle {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        color: #6c757d;
+    }
+
+    .day-toggle.active {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+    }
+
+    .backup-history {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+
+    .backup-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .backup-item:last-child {
+        border-bottom: none;
+    }
+
+    .backup-info {
+        flex: 1;
+    }
+
+    .backup-info h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .backup-info small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .backup-size {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin-right: 0.75rem;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .settings-container {
+            padding: 0 0.5rem;
+        }
+
+        .settings-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .settings-actions {
+            margin-left: 0;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .settings-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .settings-sidebar {
+            position: static;
+            margin-bottom: 2rem;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .color-picker-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .backup-schedule {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.25rem;
+        }
+
+        .section-body {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="settings-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-nav">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+            <li class="breadcrumb-item active">System Settings</li>
+        </ol>
+    </nav>
+
+    <!-- Settings Header -->
+    <div class="settings-header">
+        <div class="settings-icon">
+            <i class="fas fa-cog"></i>
+        </div>
+        <div class="settings-info">
+            <h1>System Settings</h1>
+            <p>Configure system-wide settings, security options, and application preferences.</p>
+        </div>
+        <div class="settings-actions">
+            <button type="button" class="btn btn-outline-secondary">
+                <i class="fas fa-undo me-1"></i>
+                Reset to Defaults
+            </button>
+            <button type="button" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Layout -->
+    <div class="settings-layout">
+        <!-- Sidebar Navigation -->
+        <div class="settings-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Settings Categories</h3>
+            </div>
+            <ul class="settings-nav">
+                <li class="nav-item">
+                    <a href="#general" class="nav-link active">
+                        <i class="nav-icon fas fa-sliders-h"></i>
+                        General
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#security" class="nav-link">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        Security
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#appearance" class="nav-link">
+                        <i class="nav-icon fas fa-palette"></i>
+                        Appearance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#email" class="nav-link">
+                        <i class="nav-icon fas fa-envelope"></i>
+                        Email Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#backup" class="nav-link">
+                        <i class="nav-icon fas fa-database"></i>
+                        Backup & Recovery
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#integrations" class="nav-link">
+                        <i class="nav-icon fas fa-plug"></i>
+                        Integrations
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <!-- General Settings -->
+            <div id="general" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <h3 class="section-title">General Settings</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Site Title</label>
+                            <input type="text" class="form-control" value="Blazor Template Admin" />
+                            <div class="form-help">Displayed in browser title and navigation.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Admin Email</label>
+                            <input type="email" class="form-control" value="admin@test.com" />
+                            <div class="form-help">Primary administrator email address.</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Default Time Zone</label>
+                            <select class="form-control">
+                                <option>UTC</option>
+                                <option selected>America/New_York</option>
+                                <option>America/Los_Angeles</option>
+                                <option>Europe/London</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date Format</label>
+                            <select class="form-control">
+                                <option selected>MM/DD/YYYY</option>
+                                <option>DD/MM/YYYY</option>
+                                <option>YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Maintenance Mode</h6>
+                                <p class="switch-desc">Put the application in maintenance mode for all non-admin users</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">User Registration</h6>
+                                <p class="switch-desc">Allow new users to create accounts</p>
+                            </div>
+                            <button class="toggle-switch active"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Guest Access</h6>
+                                <p class="switch-desc">Enable guest user functionality for demos</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div id="security" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="section-title">Security Settings</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Password Minimum Length</label>
+                            <input type="number" class="form-control" value="8" min="6" max="128" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Session Timeout (minutes)</label>
+                            <input type="number" class="form-control" value="30" min="5" max="1440" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Require Email Confirmation</h6>
+                                <p class="switch-desc">Users must verify their email before accessing the system</p>
+                            </div>
+                            <button class="toggle-switch active"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Two-Factor Authentication</h6>
+                                <p class="switch-desc">Require 2FA for all administrator accounts</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Account Lockout</h6>
+                                <p class="switch-desc">Lock accounts after multiple failed login attempts</p>
+                            </div>
+                            <button class="toggle-switch active"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Password Complexity</h6>
+                                <p class="switch-desc">Require uppercase, lowercase, numbers, and special characters</p>
+                            </div>
+                            <button class="toggle-switch active"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <div id="appearance" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3 class="section-title">Appearance Settings</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label class="form-label">Color Scheme</label>
+                        <div class="color-picker-grid">
+                            <div class="color-option primary selected"></div>
+                            <div class="color-option blue"></div>
+                            <div class="color-option green"></div>
+                            <div class="color-option red"></div>
+                            <div class="color-option orange"></div>
+                            <div class="color-option purple"></div>
+                        </div>
+                        <div class="form-help">Choose the primary color scheme for the application.</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Dark Mode</h6>
+                                <p class="switch-desc">Enable dark theme for better visibility in low light</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Compact Layout</h6>
+                                <p class="switch-desc">Reduce spacing and padding for more content density</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div id="email" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="section-title">Email Settings</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">SMTP Server</label>
+                            <input type="text" class="form-control" value="smtp.gmail.com" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SMTP Port</label>
+                            <input type="number" class="form-control" value="587" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <input type="email" class="form-control" value="noreply@company.com" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" value="••••••••••••" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Templates</label>
+                        <div class="email-template-list">
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <div class="template-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="template-details">
+                                        <h6>Welcome Email</h6>
+                                        <small>Sent to new users after registration</small>
+                                    </div>
+                                </div>
+                                <span class="template-status enabled">Enabled</span>
+                                <button class="btn btn-outline-primary btn-sm">Edit</button>
+                            </div>
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <div class="template-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div class="template-details">
+                                        <h6>Password Reset</h6>
+                                        <small>Password recovery instructions</small>
+                                    </div>
+                                </div>
+                                <span class="template-status enabled">Enabled</span>
+                                <button class="btn btn-outline-primary btn-sm">Edit</button>
+                            </div>
+                            <div class="template-item">
+                                <div class="template-info">
+                                    <div class="template-icon">
+                                        <i class="fas fa-shield-check"></i>
+                                    </div>
+                                    <div class="template-details">
+                                        <h6>Email Verification</h6>
+                                        <small>Email address confirmation</small>
+                                    </div>
+                                </div>
+                                <span class="template-status enabled">Enabled</span>
+                                <button class="btn btn-outline-primary btn-sm">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Recovery -->
+            <div id="backup" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3 class="section-title">Backup & Recovery</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label class="form-label">Automatic Backup Schedule</label>
+                        <div class="backup-schedule">
+                            <div class="day-toggle active">MON</div>
+                            <div class="day-toggle">TUE</div>
+                            <div class="day-toggle active">WED</div>
+                            <div class="day-toggle">THU</div>
+                            <div class="day-toggle active">FRI</div>
+                            <div class="day-toggle">SAT</div>
+                            <div class="day-toggle">SUN</div>
+                        </div>
+                        <div class="form-help">Select days for automatic database backups.</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Backup Time</label>
+                            <input type="time" class="form-control" value="02:00" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Retention Period (days)</label>
+                            <input type="number" class="form-control" value="30" min="1" max="365" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Recent Backups</label>
+                        <div class="backup-history">
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <h6>Daily Backup - January 15, 2024</h6>
+                                    <small>Completed at 2:00 AM</small>
+                                </div>
+                                <span class="backup-size">127 MB</span>
+                                <button class="btn btn-outline-primary btn-sm">Download</button>
+                            </div>
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <h6>Daily Backup - January 13, 2024</h6>
+                                    <small>Completed at 2:00 AM</small>
+                                </div>
+                                <span class="backup-size">125 MB</span>
+                                <button class="btn btn-outline-primary btn-sm">Download</button>
+                            </div>
+                            <div class="backup-item">
+                                <div class="backup-info">
+                                    <h6>Daily Backup - January 11, 2024</h6>
+                                    <small>Completed at 2:00 AM</small>
+                                </div>
+                                <span class="backup-size">123 MB</span>
+                                <button class="btn btn-outline-primary btn-sm">Download</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary me-2">
+                            <i class="fas fa-play me-1"></i>
+                            Create Backup Now
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-upload me-1"></i>
+                            Restore from Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integrations -->
+            <div id="integrations" class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-plug"></i>
+                    </div>
+                    <h3 class="section-title">Third-Party Integrations</h3>
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Google OAuth</h6>
+                                <p class="switch-desc">Allow users to sign in with their Google accounts</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Microsoft OAuth</h6>
+                                <p class="switch-desc">Enable Microsoft/Azure AD authentication</p>
+                            </div>
+                            <button class="toggle-switch"></button>
+                        </div>
+                        <div class="form-switch">
+                            <div class="switch-info">
+                                <h6 class="switch-title">Analytics Tracking</h6>
+                                <p class="switch-desc">Enable Google Analytics or similar tracking</p>
+                            </div>
+                            <button class="toggle-switch active"></button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Google Client ID</label>
+                            <input type="text" class="form-control" placeholder="Enter Google OAuth Client ID" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Google Client Secret</label>
+                            <input type="password" class="form-control" placeholder="Enter Google OAuth Client Secret" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Mock data and settings logic will go here later
+}

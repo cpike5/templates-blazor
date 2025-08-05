@@ -1,0 +1,752 @@
+﻿@page "/admin"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Data
+@layout MainLayout
+
+<style>
+    .admin-dashboard {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-content h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin: 0 0 0.75rem 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .welcome-content p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.75rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--color-primary);
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.users { background: linear-gradient(135deg, #17a2b8, #138496); }
+    .stat-icon.roles { background: linear-gradient(135deg, #ffc107, #e0a800); }
+    .stat-icon.activity { background: linear-gradient(135deg, #28a745, #1e7e34); }
+    .stat-icon.security { background: linear-gradient(135deg, #dc3545, #c82333); }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-trend.up { color: var(--color-success); }
+    .stat-trend.down { color: var(--color-danger); }
+    .stat-trend.neutral { color: #6c757d; }
+
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--color-dark);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .dashboard-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .main-panels {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .sidebar-panels {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .panel {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .panel-header {
+        background: #f8f9fa;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .panel-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .panel-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+
+    .panel-body {
+        padding: 1.5rem;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+
+    .quick-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--color-dark);
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .quick-action:hover {
+        border-color: var(--color-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.15);
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .quick-action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--color-primary);
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .quick-action:hover .quick-action-icon {
+        background: var(--color-primary);
+        color: white;
+    }
+
+    .quick-action-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        margin: 0;
+    }
+
+    .activity-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .activity-content h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .activity-content small {
+        color: #6c757d;
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+
+    .activity-time {
+        color: #6c757d;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .system-status {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .status-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .status-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+    }
+
+    .status-icon.healthy {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-icon.warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-icon.error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .status-details small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.healthy {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1200px) {
+        .dashboard-content {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar-panels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-dashboard {
+            padding: 0 0.5rem;
+        }
+
+        .welcome-banner {
+            padding: 2rem 1.5rem;
+        }
+
+        .welcome-content h1 {
+            font-size: 1.75rem;
+        }
+
+        .stats-overview {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            padding: 1.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+        }
+
+        .quick-actions {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+
+        .panel-body {
+            padding: 1rem;
+        }
+
+        .sidebar-panels {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Welcome Banner -->
+<div class="admin-dashboard">
+    <div class="welcome-banner">
+        <div class="welcome-content">
+            <h1>Welcome to Admin Dashboard</h1>
+            <p>Manage users, roles, and system settings from this central control panel. Monitor system health and recent activity at a glance.</p>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +12%
+                </div>
+            </div>
+            <div class="stat-value">24</div>
+            <p class="stat-label">Total Users</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon roles">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="stat-trend neutral">
+                    <i class="fas fa-minus"></i>
+                    0%
+                </div>
+            </div>
+            <div class="stat-value">4</div>
+            <p class="stat-label">Active Roles</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon activity">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +8%
+                </div>
+            </div>
+            <div class="stat-value">156</div>
+            <p class="stat-label">Today's Sessions</p>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon security">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="stat-trend down">
+                    <i class="fas fa-arrow-down"></i>
+                    -3
+                </div>
+            </div>
+            <div class="stat-value">2</div>
+            <p class="stat-label">Security Alerts</p>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+        <!-- Main Panels -->
+        <div class="main-panels">
+            <!-- Quick Actions -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <div class="panel-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        Quick Actions
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="quick-actions">
+                        <a href="/admin/users" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h4 class="quick-action-title">Manage Users</h4>
+                        </a>
+                        <a href="/admin/roles" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <h4 class="quick-action-title">Manage Roles</h4>
+                        </a>
+                        <a href="/admin/settings" class="quick-action">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                            <h4 class="quick-action-title">System Settings</h4>
+                        </a>
+                        <button class="quick-action" onclick="alert('Create User functionality')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h4 class="quick-action-title">Add New User</h4>
+                        </button>
+                        <button class="quick-action" onclick="alert('Create Role functionality')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <h4 class="quick-action-title">Create Role</h4>
+                        </button>
+                        <button class="quick-action" onclick="alert('Export Data functionality')">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <h4 class="quick-action-title">Export Data</h4>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <div class="panel-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        Recent Activity
+                    </h3>
+                    <a href="/admin/logs" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="panel-body">
+                    <div class="activity-feed">
+                        <div class="activity-item">
+                            <div class="activity-avatar">JD</div>
+                            <div class="activity-content">
+                                <h6>John Doe logged in</h6>
+                                <small>User authentication successful from 192.168.1.100</small>
+                            </div>
+                            <div class="activity-time">2 min ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">SA</div>
+                            <div class="activity-content">
+                                <h6>New user registered</h6>
+                                <small>Sarah Wilson created account and assigned User role</small>
+                            </div>
+                            <div class="activity-time">15 min ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">MW</div>
+                            <div class="activity-content">
+                                <h6>Mike Wilson updated profile</h6>
+                                <small>Changed phone number and department</small>
+                            </div>
+                            <div class="activity-time">1 hour ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">JS</div>
+                            <div class="activity-content">
+                                <h6>Jane Smith role changed</h6>
+                                <small>Administrator assigned Manager role</small>
+                            </div>
+                            <div class="activity-time">3 hours ago</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-avatar">RB</div>
+                            <div class="activity-content">
+                                <h6>Failed login attempt</h6>
+                                <small>User robert.brown@company.com - Account locked</small>
+                            </div>
+                            <div class="activity-time">4 hours ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Panels -->
+        <div class="sidebar-panels">
+            <!-- System Status -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <div class="panel-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        System Status
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="system-status">
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-icon healthy">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="status-details">
+                                    <h6>Database</h6>
+                                    <small>SQL Server connection active</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">Healthy</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-icon healthy">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="status-details">
+                                    <h6>Email Service</h6>
+                                    <small>SMTP server responding</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">Online</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-icon warning">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="status-details">
+                                    <h6>Security</h6>
+                                    <small>2 failed login attempts detected</small>
+                                </div>
+                            </div>
+                            <span class="status-badge warning">Warning</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-icon healthy">
+                                    <i class="fas fa-memory"></i>
+                                </div>
+                                <div class="status-details">
+                                    <h6>Memory Usage</h6>
+                                    <small>68% of available memory</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <div class="panel-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        Health Metrics
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="system-status">
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-details">
+                                    <h6>Uptime</h6>
+                                    <small>System running for 15 days, 4 hours</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">99.8%</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-details">
+                                    <h6>Response Time</h6>
+                                    <small>Average server response</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">120ms</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-details">
+                                    <h6>Active Sessions</h6>
+                                    <small>Currently logged in users</small>
+                                </div>
+                            </div>
+                            <span class="status-badge healthy">18</span>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-info">
+                                <div class="status-details">
+                                    <h6>Storage</h6>
+                                    <small>Database and file storage</small>
+                                </div>
+                            </div>
+                            <span class="status-badge warning">75%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Mock data and dashboard logic will go here later
+}
