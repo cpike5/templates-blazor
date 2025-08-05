@@ -32,10 +32,10 @@ namespace BlazorTemplate
             // Configure Site Options
             builder.Services.Configure<ConfigurationOptions>(builder.Configuration.GetSection(ConfigurationOptions.SectionName));
 
-            builder.Services.AddScoped<IUserRoleService, UserRoleService>();
             builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
             builder.Services.AddNavigationServices(builder.Configuration);
+            builder.Services.AddAdminServices();
 
 
             // Add services to the container.

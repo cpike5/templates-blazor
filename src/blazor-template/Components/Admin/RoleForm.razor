@@ -32,9 +32,9 @@
         text-decoration: none;
     }
 
-    .breadcrumb-item a:hover {
-        text-decoration: underline;
-    }
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
 
     .breadcrumb-item.active {
         color: var(--color-dark);
@@ -155,9 +155,9 @@
         margin-bottom: 1.5rem;
     }
 
-    .form-group:last-child {
-        margin-bottom: 0;
-    }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
 
     .form-label {
         display: block;
@@ -167,11 +167,11 @@
         font-size: 0.875rem;
     }
 
-    .form-label.required::after {
-        content: "*";
-        color: var(--color-danger);
-        margin-left: 0.25rem;
-    }
+        .form-label.required::after {
+            content: "*";
+            color: var(--color-danger);
+            margin-left: 0.25rem;
+        }
 
     .form-control {
         width: 100%;
@@ -183,19 +183,19 @@
         background: white;
     }
 
-    .form-control:focus {
-        border-color: var(--color-primary);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(120, 39, 137, 0.1);
-    }
+        .form-control:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(120, 39, 137, 0.1);
+        }
 
-    .form-control.is-invalid {
-        border-color: var(--color-danger);
-    }
+        .form-control.is-invalid {
+            border-color: var(--color-danger);
+        }
 
-    .form-control.is-invalid:focus {
-        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
-    }
+            .form-control.is-invalid:focus {
+                box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+            }
 
     .form-help {
         font-size: 0.75rem;
@@ -228,14 +228,14 @@
         text-align: center;
     }
 
-    .role-type-option:hover {
-        border-color: var(--color-primary);
-    }
+        .role-type-option:hover {
+            border-color: var(--color-primary);
+        }
 
-    .role-type-option.selected {
-        border-color: var(--color-primary);
-        background: rgba(120, 39, 137, 0.05);
-    }
+        .role-type-option.selected {
+            border-color: var(--color-primary);
+            background: rgba(120, 39, 137, 0.05);
+        }
 
     .role-type-icon {
         width: 40px;
@@ -319,9 +319,9 @@
         font-weight: 600;
     }
 
-    .select-all-toggle:hover {
-        text-decoration: underline;
-    }
+        .select-all-toggle:hover {
+            text-decoration: underline;
+        }
 
     .permission-list {
         padding: 0.75rem;
@@ -335,9 +335,9 @@
         border-bottom: 1px solid #f1f3f4;
     }
 
-    .permission-item:last-child {
-        border-bottom: none;
-    }
+        .permission-item:last-child {
+            border-bottom: none;
+        }
 
     .permission-info {
         flex: 1;
@@ -370,26 +370,26 @@
         flex-shrink: 0;
     }
 
-    .permission-toggle.active {
-        background: var(--color-success);
-    }
+        .permission-toggle.active {
+            background: var(--color-success);
+        }
 
-    .permission-toggle::after {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 16px;
-        height: 16px;
-        background: white;
-        border-radius: 50%;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
+        .permission-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
 
-    .permission-toggle.active::after {
-        transform: translateX(20px);
-    }
+        .permission-toggle.active::after {
+            transform: translateX(20px);
+        }
 
     .role-preview {
         background: #f8f9fa;
@@ -440,14 +440,14 @@
         margin-top: 0.75rem;
     }
 
-    .preview-permissions h6 {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--color-dark);
-        margin: 0 0 0.5rem 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+        .preview-permissions h6 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-dark);
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
     .permission-tags {
         display: flex;
@@ -521,13 +521,20 @@
             <i class="fas fa-user-shield"></i>
         </div>
         <div class="form-info">
-            <h1>@(IsEditMode ? "Edit Role" : "Create New Role")</h1>
-            <p>@(IsEditMode ? "Modify role settings, permissions, and user assignments." : "Define a new role with specific permissions and access levels for your application.")</p>
+            <h1>@GetFormTitle()</h1>
+            <p>@GetFormDescription()</p>
         </div>
         <div class="form-actions">
-            <a href="/admin/roles" class="btn btn-outline-secondary">Cancel</a>
-            <button type="button" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i>
+            <button type="button" class="btn btn-outline-secondary" @onclick="Cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" @onclick="SaveRole" disabled="@(isSaving || isLoading)">
+                @if (isSaving)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="fas fa-save me-1"></i>
+                }
                 @(IsEditMode ? "Update Role" : "Create Role")
             </button>
         </div>
@@ -548,13 +555,24 @@
                 <div class="section-body">
                     <div class="form-group">
                         <label class="form-label required">Role Name</label>
-                        <input type="text" class="form-control" placeholder="Enter role name (e.g., Content Manager)" value="" />
-                        <div class="form-help">Choose a descriptive name that clearly identifies the role's purpose.</div>
+                        <input type="text" class="form-control @(HasValidationError("Name") ? "is-invalid" : "")"
+                               placeholder="Enter role name (e.g., Content Manager)"
+                               @bind="@uiRoleName"
+                               @oninput="@OnRoleNameChanged" />
+                        @if (HasValidationError("Name"))
+                        {
+                            <div class="form-error">@GetValidationError("Name")</div>
+                        }
+                        else
+                        {
+                            <div class="form-help">Choose a descriptive name that clearly identifies the role's purpose.</div>
+                        }
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="3" placeholder="Describe the role's responsibilities and access level..."></textarea>
+                        <textarea class="form-control" rows="3" placeholder="Describe the role's responsibilities and access level..."
+                                  @bind="@uiRoleDescription"></textarea>
                         <div class="form-help">Provide a brief description of what this role can do and its intended use.</div>
                     </div>
 
@@ -589,165 +607,52 @@
                     <h3 class="section-title">Permissions</h3>
                 </div>
                 <div class="section-body">
-                    <div class="permissions-grid">
-                        <!-- User Management Category -->
-                        <div class="permission-category">
-                            <div class="category-header">
-                                <h4 class="category-title">
-                                    <div class="category-icon">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                    User Management
-                                </h4>
-                                <span class="select-all-toggle">Select All</span>
+                    @if (isLoading)
+                    {
+                        <div style="text-align: center; padding: 2rem;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                            <div class="permission-list">
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">View Users</h6>
-                                        <p class="permission-desc">Access user list and profiles</p>
-                                    </div>
-                                    <button class="permission-toggle active"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Create Users</h6>
-                                        <p class="permission-desc">Add new user accounts</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Edit Users</h6>
-                                        <p class="permission-desc">Modify user information</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Delete Users</h6>
-                                        <p class="permission-desc">Remove user accounts</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                            </div>
+                            <p class="mt-2">Loading permissions...</p>
                         </div>
-
-                        <!-- Role Management Category -->
-                        <div class="permission-category">
-                            <div class="category-header">
-                                <h4 class="category-title">
-                                    <div class="category-icon">
-                                        <i class="fas fa-user-shield"></i>
+                    }
+                    else
+                    {
+                        <div class="permissions-grid">
+                            @foreach (var category in availablePermissions.GroupBy(p => p.Category))
+                            {
+                                <div class="permission-category">
+                                    <div class="category-header">
+                                        <h4 class="category-title">
+                                            <div class="category-icon">
+                                                <i class="@(category.First().Icon)"></i>
+                                            </div>
+                                            @category.Key
+                                        </h4>
+                                        <span class="select-all-toggle" @onclick="() => ToggleAllPermissions(category.Key)">
+                                            Select All
+                                        </span>
                                     </div>
-                                    Role Management
-                                </h4>
-                                <span class="select-all-toggle">Select All</span>
-                            </div>
-                            <div class="permission-list">
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">View Roles</h6>
-                                        <p class="permission-desc">Access role list and details</p>
+                                    <div class="permission-list">
+                                        @foreach (var permission in category)
+                                        {
+                                            var isSelected = selectedPermissions.ContainsKey(permission.Name) && selectedPermissions[permission.Name];
+                                            <div class="permission-item">
+                                                <div class="permission-info">
+                                                    <h6 class="permission-name">@permission.DisplayName</h6>
+                                                    <p class="permission-desc">@permission.Description</p>
+                                                </div>
+                                                <button type="button"
+                                                        class="permission-toggle @(isSelected ? "active" : "")"
+                                                        @onclick="() => TogglePermission(permission.Name)">
+                                                </button>
+                                            </div>
+                                        }
                                     </div>
-                                    <button class="permission-toggle"></button>
                                 </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Manage Roles</h6>
-                                        <p class="permission-desc">Create and edit roles</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Assign Roles</h6>
-                                        <p class="permission-desc">Assign roles to users</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                            </div>
+                            }
                         </div>
-
-                        <!-- System Administration -->
-                        <div class="permission-category">
-                            <div class="category-header">
-                                <h4 class="category-title">
-                                    <div class="category-icon">
-                                        <i class="fas fa-cog"></i>
-                                    </div>
-                                    System Admin
-                                </h4>
-                                <span class="select-all-toggle">Select All</span>
-                            </div>
-                            <div class="permission-list">
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">System Settings</h6>
-                                        <p class="permission-desc">Access system configuration</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">View Logs</h6>
-                                        <p class="permission-desc">Access system and audit logs</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Backup Data</h6>
-                                        <p class="permission-desc">Create and manage backups</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Content Management -->
-                        <div class="permission-category">
-                            <div class="category-header">
-                                <h4 class="category-title">
-                                    <div class="category-icon">
-                                        <i class="fas fa-file-alt"></i>
-                                    </div>
-                                    Content
-                                </h4>
-                                <span class="select-all-toggle">Select All</span>
-                            </div>
-                            <div class="permission-list">
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">View Content</h6>
-                                        <p class="permission-desc">Read access to content</p>
-                                    </div>
-                                    <button class="permission-toggle active"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Create Content</h6>
-                                        <p class="permission-desc">Add new content items</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Edit Content</h6>
-                                        <p class="permission-desc">Modify existing content</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <h6 class="permission-name">Publish Content</h6>
-                                        <p class="permission-desc">Make content publicly visible</p>
-                                    </div>
-                                    <button class="permission-toggle"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -770,15 +675,22 @@
                                 <i class="fas fa-user-plus"></i>
                             </div>
                             <div class="preview-details">
-                                <h6>Content Manager</h6>
+                                <h6>@(string.IsNullOrEmpty(IsEditMode ? updateRequest.Name : createRequest.Name) ? "New Role" : (IsEditMode ? updateRequest.Name : createRequest.Name))</h6>
                                 <small>Custom Role</small>
                             </div>
                         </div>
                         <div class="preview-permissions">
-                            <h6>Selected Permissions (2)</h6>
+                            <h6>Selected Permissions (@GetSelectedPermissionCount())</h6>
                             <div class="permission-tags">
-                                <span class="permission-tag">View Users</span>
-                                <span class="permission-tag">View Content</span>
+                                @foreach (var permission in selectedPermissions.Where(p => p.Value).Take(5))
+                                {
+                                    var permissionDetails = availablePermissions.FirstOrDefault(p => p.Name == permission.Key);
+                                    <span class="permission-tag">@(permissionDetails?.DisplayName ?? permission.Key)</span>
+                                }
+                                @if (GetSelectedPermissionCount() > 5)
+                                {
+                                    <span class="permission-tag">+@(GetSelectedPermissionCount() - 5) more</span>
+                                }
                             </div>
                         </div>
                     </div>
@@ -829,10 +741,254 @@
     </div>
 </div>
 
+@using BlazorTemplate.Services
+@using BlazorTemplate.DTO
+@inject IAdminRoleService AdminRoleService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
 @code {
     [Parameter] public string? RoleId { get; set; }
-    
+
     private bool IsEditMode => !string.IsNullOrEmpty(RoleId);
-    
-    // Mock data and form logic will go here later
+    private string uiRoleName
+    {
+        get
+        {
+            return (IsEditMode ? updateRequest.Name : createRequest.Name);
+        }
+        set
+        {
+            if (IsEditMode)
+            {
+                updateRequest.Name = value;
+            }
+            else
+            {
+                createRequest.Name = value;
+            }
+        }
+    }
+    private string uiRoleDescription
+    {
+        get
+        {
+            return (IsEditMode ? updateRequest.Description : createRequest.Description);
+        }
+        set
+        {
+            if (IsEditMode)
+            {
+                updateRequest.Description = value;
+            }
+            else
+            {
+                createRequest.Description = value;
+            }
+        }
+    }
+    private bool isLoading = true;
+    private bool isSaving = false;
+
+    private CreateRoleRequest createRequest = new();
+    private UpdateRoleRequest updateRequest = new();
+    private RoleDetailDto? existingRole;
+    private List<PermissionDto> availablePermissions = new();
+    private Dictionary<string, bool> selectedPermissions = new();
+    private Dictionary<string, string> validationErrors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            availablePermissions = await AdminRoleService.GetAvailablePermissionsAsync();
+
+            if (IsEditMode)
+            {
+                existingRole = await AdminRoleService.GetRoleByIdAsync(RoleId!);
+                updateRequest.Name = existingRole.Name;
+                updateRequest.Description = existingRole.Description;
+                updateRequest.Permissions = existingRole.Permissions.ToList();
+
+                // Set selected permissions
+                foreach (var permission in availablePermissions)
+                {
+                    selectedPermissions[permission.Name] = existingRole.Permissions.Contains(permission.Name);
+                }
+            }
+            else
+            {
+                // Initialize empty permissions
+                foreach (var permission in availablePermissions)
+                {
+                    selectedPermissions[permission.Name] = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveRole()
+    {
+        if (isSaving) return;
+
+        // Validate form
+        if (!ValidateForm())
+        {
+            StateHasChanged();
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var selectedPermissionNames = selectedPermissions
+                .Where(p => p.Value)
+                .Select(p => p.Key)
+                .ToList();
+
+            Microsoft.AspNetCore.Identity.IdentityResult result;
+
+            if (IsEditMode)
+            {
+                updateRequest.Permissions = selectedPermissionNames;
+                result = await AdminRoleService.UpdateRoleAsync(RoleId!, updateRequest);
+            }
+            else
+            {
+                createRequest.Permissions = selectedPermissionNames;
+                result = await AdminRoleService.CreateRoleAsync(createRequest);
+            }
+
+            if (result.Succeeded)
+            {
+                await JSRuntime.InvokeVoidAsync("alert",
+                    $"Role '{(IsEditMode ? updateRequest.Name : createRequest.Name)}' {(IsEditMode ? "updated" : "created")} successfully!");
+                Navigation.NavigateTo("/admin/roles");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                await JSRuntime.InvokeVoidAsync("alert", $"Error saving role: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving role: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void TogglePermission(string permissionName)
+    {
+        selectedPermissions[permissionName] = !selectedPermissions[permissionName];
+        StateHasChanged();
+    }
+
+    private void ToggleAllPermissions(string category)
+    {
+        var categoryPermissions = availablePermissions
+            .Where(p => p.Category == category)
+            .Select(p => p.Name);
+
+        var allSelected = categoryPermissions.All(p => selectedPermissions[p]);
+
+        foreach (var permission in categoryPermissions)
+        {
+            selectedPermissions[permission] = !allSelected;
+        }
+
+        StateHasChanged();
+    }
+
+    private int GetSelectedPermissionCount()
+    {
+        return selectedPermissions.Count(p => p.Value);
+    }
+
+    private string GetFormTitle()
+    {
+        return IsEditMode ? $"Edit Role: {existingRole?.Name}" : "Create New Role";
+    }
+
+    private string GetFormDescription()
+    {
+        return IsEditMode
+            ? "Modify role settings, permissions, and user assignments."
+            : "Define a new role with specific permissions and access levels for your application.";
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/admin/roles");
+    }
+
+    private bool ValidateForm()
+    {
+        validationErrors.Clear();
+        var roleName = IsEditMode ? updateRequest.Name : createRequest.Name;
+
+        // Validate role name
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            validationErrors["Name"] = "Role name is required.";
+        }
+        else if (roleName.Length < 2 || roleName.Length > 50)
+        {
+            validationErrors["Name"] = "Role name must be between 2 and 50 characters.";
+        }
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(roleName, @"^[a-zA-Z0-9\s\-_]+$"))
+        {
+            validationErrors["Name"] = "Role name contains invalid characters. Only letters, numbers, spaces, hyphens, and underscores are allowed.";
+        }
+
+        return !validationErrors.Any();
+    }
+
+    private bool HasValidationError(string field)
+    {
+        return validationErrors.ContainsKey(field);
+    }
+
+    private string GetValidationError(string field)
+    {
+        return validationErrors.GetValueOrDefault(field, "");
+    }
+
+    private async Task OnRoleNameChanged(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString() ?? "";
+        if (IsEditMode)
+        {
+            updateRequest.Name = newValue;
+        }
+        else
+        {
+            createRequest.Name = newValue;
+        }
+
+        // Clear validation error for this field if it exists
+        if (validationErrors.ContainsKey("Name"))
+        {
+            validationErrors.Remove("Name");
+        }
+
+        StateHasChanged();
+    }
 }

@@ -480,7 +480,7 @@
         <p>Manage system roles and permissions</p>
     </div>
     <div class="admin-actions">
-        <button class="btn btn-primary">
+        <button class="btn btn-primary" @onclick="NavigateToCreateRole">
             <i class="fas fa-plus me-2"></i>
             Create New Role
         </button>
@@ -499,28 +499,28 @@
         <div class="stat-icon total">
             <i class="fas fa-user-tag"></i>
         </div>
-        <div class="stat-value">4</div>
+        <div class="stat-value">@stats.TotalRoles</div>
         <p class="stat-label">Total Roles</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon system">
             <i class="fas fa-cog"></i>
         </div>
-        <div class="stat-value">2</div>
+        <div class="stat-value">@stats.SystemRoles</div>
         <p class="stat-label">System Roles</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon custom">
             <i class="fas fa-user-plus"></i>
         </div>
-        <div class="stat-value">2</div>
+        <div class="stat-value">@stats.CustomRoles</div>
         <p class="stat-label">Custom Roles</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon assignments">
             <i class="fas fa-users"></i>
         </div>
-        <div class="stat-value">28</div>
+        <div class="stat-value">@stats.TotalAssignments</div>
         <p class="stat-label">Total Assignments</p>
     </div>
 </div>
@@ -533,8 +533,8 @@
             All Roles
         </h3>
         <div class="search-filter-bar">
-            <input type="text" class="search-input" placeholder="Search roles..." />
-            <select class="filter-dropdown">
+            <input type="text" class="search-input" placeholder="Search roles..." @value="searchTerm" @onchange="OnSearchChanged" />
+            <select class="filter-dropdown" @value="filterType" @onchange="OnFilterChanged">
                 <option value="">All Types</option>
                 <option value="system">System Roles</option>
                 <option value="custom">Custom Roles</option>
@@ -554,217 +554,109 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>
-                    <div class="role-info">
-                        <div class="role-icon administrator">
-                            <i class="fas fa-crown"></i>
+            @if (isLoading)
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="role-details">
-                            <h6>Administrator</h6>
-                            <small>Full system access and control</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="role-type-badge system">System</span>
-                </td>
-                <td>
-                    <div class="user-count">
-                        <span>1</span>
-                        <div class="user-avatars">
-                            <div class="user-avatar-sm">SA</div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="permissions-preview">
-                        <span class="permission-tag">All Permissions</span>
-                    </div>
-                </td>
-                <td>
-                    <small>System Default</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view">
-                            <i class="fas fa-eye"></i>
-                            View
-                        </button>
-                        <button class="btn-action btn-users">
-                            <i class="fas fa-users"></i>
-                            Users
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="role-info">
-                        <div class="role-icon user">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="role-details">
-                            <h6>User</h6>
-                            <small>Standard user access</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="role-type-badge system">System</span>
-                </td>
-                <td>
-                    <div class="user-count">
-                        <span>20</span>
-                        <div class="user-avatars">
-                            <div class="user-avatar-sm">JD</div>
-                            <div class="user-avatar-sm">MW</div>
-                            <div class="user-avatar-sm">AB</div>
-                            <div class="user-avatar-sm more-users">+17</div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="permissions-preview">
-                        <span class="permission-tag">Read</span>
-                        <span class="permission-tag">Profile</span>
-                        <span class="permission-tag">Basic</span>
-                    </div>
-                </td>
-                <td>
-                    <small>System Default</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view">
-                            <i class="fas fa-eye"></i>
-                            View
-                        </button>
-                        <button class="btn-action btn-users">
-                            <i class="fas fa-users"></i>
-                            Users
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="role-info">
-                        <div class="role-icon manager">
-                            <i class="fas fa-user-tie"></i>
-                        </div>
-                        <div class="role-details">
-                            <h6>Manager</h6>
-                            <small>Team management capabilities</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="role-type-badge custom">Custom</span>
-                </td>
-                <td>
-                    <div class="user-count">
-                        <span>5</span>
-                        <div class="user-avatars">
-                            <div class="user-avatar-sm">JS</div>
-                            <div class="user-avatar-sm">RB</div>
-                            <div class="user-avatar-sm">KL</div>
-                            <div class="user-avatar-sm more-users">+2</div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="permissions-preview">
-                        <span class="permission-tag">Read</span>
-                        <span class="permission-tag">Write</span>
-                        <span class="permission-tag">Manage</span>
-                        <span class="permission-tag">Reports</span>
-                    </div>
-                </td>
-                <td>
-                    <small>Jan 10, 2024</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view">
-                            <i class="fas fa-eye"></i>
-                            View
-                        </button>
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-users">
-                            <i class="fas fa-users"></i>
-                            Users
-                        </button>
-                        <button class="btn-action btn-danger">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="role-info">
-                        <div class="role-icon custom">
-                            <i class="fas fa-eye"></i>
-                        </div>
-                        <div class="role-details">
-                            <h6>Viewer</h6>
-                            <small>Read-only access to specific areas</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="role-type-badge custom">Custom</span>
-                </td>
-                <td>
-                    <div class="user-count">
-                        <span>2</span>
-                        <div class="user-avatars">
-                            <div class="user-avatar-sm">TH</div>
-                            <div class="user-avatar-sm">GF</div>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="permissions-preview">
-                        <span class="permission-tag">Read</span>
-                        <span class="permission-tag">View Reports</span>
-                    </div>
-                </td>
-                <td>
-                    <small>Jan 15, 2024</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-view">
-                            <i class="fas fa-eye"></i>
-                            View
-                        </button>
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-users">
-                            <i class="fas fa-users"></i>
-                            Users
-                        </button>
-                        <button class="btn-action btn-danger">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                        <p class="mt-2">Loading roles...</p>
+                    </td>
+                </tr>
+            }
+            else if (!FilteredRoles.Any())
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-search text-muted" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p class="text-muted">No roles found matching your criteria.</p>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var role in FilteredRoles)
+                {
+                    <tr>
+                        <td>
+                            <div class="role-info">
+                                <div class="role-icon @GetRoleIconClass(role)">
+                                    <i class="@GetRoleIcon(role)"></i>
+                                </div>
+                                <div class="role-details">
+                                    <h6>@role.Name</h6>
+                                    <small>@role.Description</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="role-type-badge @(role.IsSystemRole ? "system" : "custom")">
+                                @(role.IsSystemRole ? "System" : "Custom")
+                            </span>
+                        </td>
+                        <td>
+                            <div class="user-count">
+                                <span>@role.UserCount</span>
+                                @if (role.UserCount > 0)
+                                {
+                                    <div class="user-avatars">
+                                        <div class="user-avatar-sm">@role.UserCount</div>
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="permissions-preview">
+                                @foreach (var permission in role.Permissions.Take(3))
+                                {
+                                    <span class="permission-tag">@permission</span>
+                                }
+                                @if (role.Permissions.Count > 3)
+                                {
+                                    <span class="permission-tag">+@(role.Permissions.Count - 3) more</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <small>@(role.IsSystemRole ? "System Default" : role.CreatedAt.ToString("MMM dd, yyyy"))</small>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-view" @onclick="() => NavigateToViewRole(role.Id)">
+                                    <i class="fas fa-eye"></i>
+                                    View
+                                </button>
+                                @if (!role.IsSystemRole)
+                                {
+                                    <button class="btn-action btn-edit" @onclick="() => NavigateToEditRole(role.Id)">
+                                        <i class="fas fa-edit"></i>
+                                        Edit
+                                    </button>
+                                }
+                                <button class="btn-action btn-users" @onclick="() => NavigateToRoleUsers(role.Id)">
+                                    <i class="fas fa-users"></i>
+                                    Users
+                                </button>
+                                @if (!role.IsSystemRole)
+                                {
+                                    <button class="btn-action btn-danger" @onclick="() => DeleteRole(role)" 
+                                            disabled="@(role.UserCount > 0)">
+                                        <i class="fas fa-trash"></i>
+                                        Delete
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
         </tbody>
     </table>
 
     <div class="table-pagination">
         <div class="pagination-info">
-            Showing 1-4 of 4 roles
+            Showing @FilteredRoles.Count of @roles.Count roles
         </div>
         <div class="pagination-controls">
             <button class="pagination-btn" disabled>
@@ -778,6 +670,148 @@
     </div>
 </div>
 
+@using BlazorTemplate.Services
+@using BlazorTemplate.DTO
+@inject IAdminRoleService AdminRoleService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
 @code {
-    // Mock data and component logic will go here later
+    private List<RoleDto> roles = new();
+    private RoleStatsDto stats = new();
+    private string searchTerm = "";
+    private string filterType = "";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            roles = await AdminRoleService.GetRolesAsync();
+            stats = await AdminRoleService.GetRoleStatisticsAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error appropriately
+            Console.WriteLine($"Error loading roles: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<RoleDto> FilteredRoles
+    {
+        get
+        {
+            var filtered = roles.AsEnumerable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                filtered = filtered.Where(r => r.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                              (r.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            if (!string.IsNullOrEmpty(filterType))
+            {
+                filtered = filterType switch
+                {
+                    "system" => filtered.Where(r => r.IsSystemRole),
+                    "custom" => filtered.Where(r => !r.IsSystemRole),
+                    _ => filtered
+                };
+            }
+
+            return filtered.ToList();
+        }
+    }
+
+    private void NavigateToCreateRole()
+    {
+        Navigation.NavigateTo("/admin/roles/new");
+    }
+
+    private void NavigateToEditRole(string roleId)
+    {
+        Navigation.NavigateTo($"/admin/roles/edit/{roleId}");
+    }
+
+    private void NavigateToViewRole(string roleId)
+    {
+        Navigation.NavigateTo($"/admin/roles/{roleId}");
+    }
+
+    private void NavigateToRoleUsers(string roleId)
+    {
+        Navigation.NavigateTo($"/admin/roles/{roleId}/users");
+    }
+
+    private async Task DeleteRole(RoleDto role)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to delete the role '{role.Name}'? This action cannot be undone.");
+        
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await AdminRoleService.DeleteRoleAsync(role.Id);
+            if (result.Succeeded)
+            {
+                await LoadData(); // Reload the data
+                await JSRuntime.InvokeVoidAsync("alert", $"Role '{role.Name}' has been deleted successfully.");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                await JSRuntime.InvokeVoidAsync("alert", $"Error deleting role: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting role: {ex.Message}");
+        }
+    }
+
+    private string GetRoleIcon(RoleDto role)
+    {
+        return role.Name.ToLowerInvariant() switch
+        {
+            "administrator" => "fas fa-crown",
+            "user" => "fas fa-user",
+            "manager" => "fas fa-user-tie",
+            "viewer" => "fas fa-eye",
+            _ => "fas fa-user-plus"
+        };
+    }
+
+    private string GetRoleIconClass(RoleDto role)
+    {
+        return role.Name.ToLowerInvariant() switch
+        {
+            "administrator" => "administrator",
+            "user" => "user", 
+            "manager" => "manager",
+            _ => "custom"
+        };
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        StateHasChanged();
+    }
+
+    private async Task OnFilterChanged(ChangeEventArgs e)
+    {
+        filterType = e.Value?.ToString() ?? "";
+        StateHasChanged();
+    }
 }

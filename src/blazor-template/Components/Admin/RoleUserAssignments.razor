@@ -1,0 +1,529 @@
+@page "/admin/roles/{RoleId}/users"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Services
+@using BlazorTemplate.DTO
+@using Microsoft.AspNetCore.Authorization
+@layout AdminLayout
+@attribute [Authorize(Roles = "Administrator")]
+@inject IAdminRoleService AdminRoleService
+@inject IUserRoleService UserRoleService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<style>
+    .assignment-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .role-summary {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .role-summary-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .assignment-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .users-section {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .user-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+    }
+
+    .user-card:hover {
+        background-color: rgba(120, 39, 137, 0.05);
+    }
+
+    .user-card:last-child {
+        border-bottom: none;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .user-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .user-details small {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+    .user-roles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-left: 1rem;
+    }
+
+    .role-badge {
+        padding: 0.125rem 0.5rem;
+        background: #e9ecef;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .role-badge.current {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .btn-remove {
+        padding: 0.375rem 0.75rem;
+        background: #ffebee;
+        color: #d32f2f;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-remove:hover {
+        background: #ffcdd2;
+        color: #c62828;
+    }
+
+    .available-users {
+        margin-top: 2rem;
+    }
+
+    .user-search {
+        margin-bottom: 1rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+        border-color: var(--color-primary);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(120, 39, 137, 0.25);
+    }
+
+    .btn-assign {
+        padding: 0.375rem 0.75rem;
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-assign:hover {
+        background: #c8e6c9;
+        color: #1b5e20;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+
+<!-- Assignment Header -->
+<div class="assignment-header">
+    <div class="role-summary">
+        <div class="role-summary-icon">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <div>
+            <h2>Role User Assignments</h2>
+            <p>@(roleDetail?.Name) - @(assignedUsers.Count) user(s) assigned</p>
+        </div>
+    </div>
+    <div class="assignment-actions">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left me-1"></i>
+            Back to Roles
+        </button>
+        <button class="btn btn-primary" @onclick="ShowAssignUsersModal">
+            <i class="fas fa-user-plus me-1"></i>
+            Assign Users
+        </button>
+    </div>
+</div>
+
+<!-- Assigned Users Section -->
+<div class="users-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="fas fa-users me-2"></i>
+            Assigned Users (@assignedUsers.Count)
+        </h3>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="empty-state">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading users...</p>
+        </div>
+    }
+    else if (!assignedUsers.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h5>No Users Assigned</h5>
+            <p>This role has no users assigned to it yet.</p>
+            <button class="btn btn-primary mt-2" @onclick="ShowAssignUsersModal">
+                <i class="fas fa-user-plus me-1"></i>
+                Assign First User
+            </button>
+        </div>
+    }
+    else
+    {
+        @foreach (var user in assignedUsers)
+        {
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">@user.Initials</div>
+                    <div class="user-details">
+                        <h6>@user.DisplayName</h6>
+                        <small>@user.Email</small>
+                    </div>
+                    <div class="user-roles">
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="role-badge @(role == roleDetail?.Name ? "current" : "")">@role</span>
+                        }
+                    </div>
+                </div>
+                <div class="user-actions">
+                    @if (!roleDetail?.IsSystemRole == true || user.Roles.Count > 1)
+                    {
+                        <button class="btn-remove" @onclick="() => RemoveUserFromRole(user)">
+                            <i class="fas fa-times me-1"></i>
+                            Remove
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Available Users Section (shown when assigning) -->
+@if (showAssignModal)
+{
+    <div class="users-section available-users">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-user-plus me-2"></i>
+                Available Users
+            </h3>
+            <button class="btn btn-outline-secondary" @onclick="HideAssignUsersModal">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+        </div>
+
+        <div style="padding: 1.5rem;">
+            <div class="user-search">
+                <input type="text" class="search-input" placeholder="Search users..." 
+                       @value="userSearchTerm" @onchange="OnUserSearchChanged" />
+            </div>
+
+            @if (isLoadingAvailableUsers)
+            {
+                <div class="empty-state">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading available users...</span>
+                    </div>
+                </div>
+            }
+            else if (!FilteredAvailableUsers.Any())
+            {
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>No available users found.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var user in FilteredAvailableUsers)
+                {
+                    <div class="user-card">
+                        <div class="user-info">
+                            <div class="user-avatar">@user.Initials</div>
+                            <div class="user-details">
+                                <h6>@user.DisplayName</h6>
+                                <small>@user.Email</small>
+                            </div>
+                            <div class="user-roles">
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="role-badge">@role</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn-assign" @onclick="() => AssignUserToRole(user)">
+                                <i class="fas fa-plus me-1"></i>
+                                Assign
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string RoleId { get; set; } = string.Empty;
+
+    private RoleDetailDto? roleDetail;
+    private List<UserDto> assignedUsers = new();
+    private List<UserDto> availableUsers = new();
+    private bool isLoading = true;
+    private bool isLoadingAvailableUsers = false;
+    private bool showAssignModal = false;
+    private string userSearchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            roleDetail = await AdminRoleService.GetRoleByIdAsync(RoleId);
+            assignedUsers = roleDetail.AssignedUsers;
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading role data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ShowAssignUsersModal()
+    {
+        showAssignModal = true;
+        await LoadAvailableUsers();
+    }
+
+    private void HideAssignUsersModal()
+    {
+        showAssignModal = false;
+        userSearchTerm = "";
+    }
+
+    private async Task LoadAvailableUsers()
+    {
+        isLoadingAvailableUsers = true;
+        try
+        {
+            var allUsers = await UserRoleService.GetUsersAsync();
+            var assignedUserIds = assignedUsers.Select(u => u.Id).ToHashSet();
+            
+            availableUsers = allUsers
+                .Where(u => !assignedUserIds.Contains(u.Id))
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email ?? "",
+                    UserName = u.UserName,
+                    EmailConfirmed = u.EmailConfirmed,
+                    LockoutEnabled = u.LockoutEnabled,
+                    LockoutEnd = u.LockoutEnd,
+                    CreatedAt = DateTime.UtcNow,
+                    PhoneNumber = u.PhoneNumber,
+                    TwoFactorEnabled = u.TwoFactorEnabled,
+                    Roles = new List<string>() // Will be populated if needed
+                })
+                .ToList();
+
+            // Load roles for each user
+            foreach (var user in availableUsers)
+            {
+                var userRoles = await UserRoleService.GetUserRolesAsync(user.Email);
+                user.Roles = userRoles.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading available users: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingAvailableUsers = false;
+        }
+    }
+
+    private List<UserDto> FilteredAvailableUsers
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(userSearchTerm))
+                return availableUsers;
+
+            return availableUsers.Where(u => 
+                u.DisplayName.Contains(userSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                u.Email.Contains(userSearchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    private async Task AssignUserToRole(UserDto user)
+    {
+        try
+        {
+            var result = await AdminRoleService.AssignRoleToUserAsync(user.Id, roleDetail!.Name);
+            if (result.Succeeded)
+            {
+                // Refresh the data
+                await LoadData();
+                await LoadAvailableUsers();
+                await JSRuntime.InvokeVoidAsync("alert", $"User '{user.DisplayName}' assigned to role '{roleDetail.Name}' successfully!");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                await JSRuntime.InvokeVoidAsync("alert", $"Error assigning user: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error assigning user: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveUserFromRole(UserDto user)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to remove '{user.DisplayName}' from the '{roleDetail?.Name}' role?");
+        
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await AdminRoleService.RemoveRoleFromUserAsync(user.Id, roleDetail!.Name);
+            if (result.Succeeded)
+            {
+                // Refresh the data
+                await LoadData();
+                if (showAssignModal)
+                {
+                    await LoadAvailableUsers();
+                }
+                await JSRuntime.InvokeVoidAsync("alert", $"User '{user.DisplayName}' removed from role '{roleDetail.Name}' successfully!");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                await JSRuntime.InvokeVoidAsync("alert", $"Error removing user: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error removing user: {ex.Message}");
+        }
+    }
+
+    private async Task OnUserSearchChanged(ChangeEventArgs e)
+    {
+        userSearchTerm = e.Value?.ToString() ?? "";
+        StateHasChanged();
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/roles");
+    }
+}

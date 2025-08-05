@@ -19,5 +19,12 @@ namespace BlazorTemplate.Extensions
             services.AddScoped<DataSeeder>();
             return services;
         }
+
+        public static IServiceCollection AddAdminServices(this IServiceCollection services)
+        {
+            services.AddScoped<IUserRoleService, UserRoleService>();
+            services.AddScoped<IAdminRoleService, AdminRoleService>();
+            return services;
+        }
     }
 }

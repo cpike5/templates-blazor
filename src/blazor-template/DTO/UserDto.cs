@@ -15,6 +15,20 @@ namespace BlazorTemplate.DTO
         public bool TwoFactorEnabled { get; set; }
         public bool IsLockedOut => LockoutEnd.HasValue && LockoutEnd > DateTimeOffset.Now;
         public string Status => IsLockedOut ? "Locked" : (EmailConfirmed ? "Active" : "Pending");
+        public string DisplayName => !string.IsNullOrEmpty(UserName) ? UserName : Email;
+        public string Initials => GetInitials();
+
+        private string GetInitials()
+        {
+            var name = DisplayName;
+            if (string.IsNullOrEmpty(name)) return "U";
+            
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+                return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+            
+            return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.Substring(0, 1).ToUpper();
+        }
     }
 
     public class UserDetailDto : UserDto
