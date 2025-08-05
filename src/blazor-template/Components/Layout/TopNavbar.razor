@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IUserRoleService RoleService
+@inject IConfiguration Configuration 
 
 <!-- Top Navigation Bar -->
 <nav class="top-navbar">
@@ -58,7 +59,7 @@
 </nav>
 
 @code {
-    [Parameter] public string AppName { get; set; } = "Blazor Template";
+    [Parameter] public string AppName { get; set; } = "";
 
     private AuthenticationState? authState;
     private bool isAuthenticated;
@@ -69,6 +70,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        AppName = Configuration["Site:Title"] ?? "Blazor Template";
         authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         isAuthenticated = authState.User?.Identity?.IsAuthenticated ?? false;
 
