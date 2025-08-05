@@ -1,9 +1,13 @@
 ﻿@page "/admin/users"
 @using BlazorTemplate.Components.Layout
 @using BlazorTemplate.Data
+@using BlazorTemplate.DTO
+@using BlazorTemplate.Services
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@inject IUserManagementService UserManagementService
+@inject NavigationManager Navigation
 
 <style>
     .admin-header {
@@ -439,28 +443,28 @@
         <div class="stat-icon total">
             <i class="fas fa-users"></i>
         </div>
-        <div class="stat-value">24</div>
+        <div class="stat-value">@(userStats?.TotalUsers ?? 0)</div>
         <p class="stat-label">Total Users</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon active">
             <i class="fas fa-user-check"></i>
         </div>
-        <div class="stat-value">20</div>
+        <div class="stat-value">@(userStats?.ActiveUsers ?? 0)</div>
         <p class="stat-label">Active Users</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon locked">
             <i class="fas fa-user-lock"></i>
         </div>
-        <div class="stat-value">2</div>
+        <div class="stat-value">@(userStats?.LockedUsers ?? 0)</div>
         <p class="stat-label">Locked Users</p>
     </div>
     <div class="stat-card">
         <div class="stat-icon pending">
             <i class="fas fa-user-clock"></i>
         </div>
-        <div class="stat-value">2</div>
+        <div class="stat-value">@(userStats?.PendingUsers ?? 0)</div>
         <p class="stat-label">Pending Verification</p>
     </div>
 </div>
@@ -473,19 +477,23 @@
             All Users
         </h3>
         <div class="search-filter-bar">
-            <input type="text" class="search-input" placeholder="Search users by name or email..." />
-            <select class="filter-dropdown">
+            <input type="text" class="search-input" placeholder="Search users by name or email..." @bind="searchTerm" @onkeypress="OnSearchKeyPress" />
+            <select class="filter-dropdown" @bind="selectedRole">
                 <option value="">All Roles</option>
                 <option value="Administrator">Administrator</option>
                 <option value="Manager">Manager</option>
                 <option value="User">User</option>
             </select>
-            <select class="filter-dropdown">
+            <select class="filter-dropdown" @bind="selectedStatus">
                 <option value="">All Status</option>
                 <option value="active">Active</option>
                 <option value="locked">Locked</option>
                 <option value="pending">Pending</option>
             </select>
+            <button class="btn btn-primary btn-sm" @onclick="SearchUsers">
+                <i class="fas fa-search"></i>
+                Search
+            </button>
         </div>
     </div>
 
@@ -501,200 +509,327 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <div class="user-avatar">SA</div>
-                        <div class="user-details">
-                            <h6>System Administrator</h6>
-                            <small>admin@test.com</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="role-badges">
-                        <span class="role-badge administrator">Administrator</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge active">
-                        <span class="status-indicator"></span>
-                        Active
-                    </span>
-                </td>
-                <td>
-                    <small>Jan 15, 2024<br />10:30 AM</small>
-                </td>
-                <td>
-                    <small>Jan 1, 2024<br />9:00 AM</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-roles">
-                            <i class="fas fa-user-tag"></i>
-                            Roles
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <div class="user-avatar">JD</div>
-                        <div class="user-details">
-                            <h6>John Doe</h6>
-                            <small>john.doe@company.com</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="role-badges">
-                        <span class="role-badge user">User</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge active">
-                        <span class="status-indicator"></span>
-                        Active
-                    </span>
-                </td>
-                <td>
-                    <small>Jan 14, 2024<br />4:45 PM</small>
-                </td>
-                <td>
-                    <small>Jan 3, 2024<br />11:20 AM</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-roles">
-                            <i class="fas fa-user-tag"></i>
-                            Roles
-                        </button>
-                        <button class="btn-action btn-danger">
-                            <i class="fas fa-lock"></i>
-                            Lock
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <div class="user-avatar">JS</div>
-                        <div class="user-details">
-                            <h6>Jane Smith</h6>
-                            <small>jane.smith@company.com</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="role-badges">
-                        <span class="role-badge user">User</span>
-                        <span class="role-badge manager">Manager</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge locked">
-                        <span class="status-indicator"></span>
-                        Locked
-                    </span>
-                </td>
-                <td>
-                    <small>Jan 10, 2024<br />8:15 AM</small>
-                </td>
-                <td>
-                    <small>Jan 5, 2024<br />2:30 PM</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-roles">
-                            <i class="fas fa-user-tag"></i>
-                            Roles
-                        </button>
-                        <button class="btn-action btn-danger">
-                            <i class="fas fa-unlock"></i>
-                            Unlock
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="user-info">
-                        <div class="user-avatar">MW</div>
-                        <div class="user-details">
-                            <h6>Mike Wilson</h6>
-                            <small>mike.wilson@company.com</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="role-badges">
-                        <span class="role-badge user">User</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge pending">
-                        <span class="status-indicator"></span>
-                        Pending
-                    </span>
-                </td>
-                <td>
-                    <small>Never</small>
-                </td>
-                <td>
-                    <small>Jan 12, 2024<br />4:00 PM</small>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn-action btn-roles">
-                            <i class="fas fa-user-tag"></i>
-                            Roles
-                        </button>
-                        <button class="btn-action btn-danger">
-                            <i class="fas fa-paper-plane"></i>
-                            Resend
-                        </button>
-                    </div>
-                </td>
-            </tr>
+            @if (isLoading)
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        Loading users...
+                    </td>
+                </tr>
+            }
+            else if (usersResult?.Items?.Any() == true)
+            {
+                @foreach (var user in usersResult.Items)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar">@GetUserInitials(user.UserName ?? user.Email)</div>
+                                <div class="user-details">
+                                    <h6>@(user.UserName ?? user.Email)</h6>
+                                    <small>@user.Email</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="role-badges">
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="role-badge @role.ToLower()">@role</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge @GetUserStatusClass(user)">
+                                <span class="status-indicator"></span>
+                                @GetUserStatus(user)
+                            </span>
+                        </td>
+                        <td>
+                            <small>Never</small>
+                        </td>
+                        <td>
+                            <small>@user.CreatedAt.ToString("MMM d, yyyy")<br />@user.CreatedAt.ToString("h:mm tt")</small>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-edit" @onclick="() => EditUser(user.Id)">
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                </button>
+                                @if (IsUserLocked(user))
+                                {
+                                    <button class="btn-action btn-danger" @onclick="() => UnlockUser(user.Id)">
+                                        <i class="fas fa-unlock"></i>
+                                        Unlock
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-action btn-danger" @onclick="() => LockUser(user.Id)">
+                                        <i class="fas fa-lock"></i>
+                                        Lock
+                                    </button>
+                                }
+                                @if (!user.EmailConfirmed)
+                                {
+                                    <button class="btn-action btn-danger" @onclick="() => ResendConfirmation(user.Id)">
+                                        <i class="fas fa-paper-plane"></i>
+                                        Resend
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-users me-2"></i>
+                        No users found.
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 
-    <div class="table-pagination">
-        <div class="pagination-info">
-            Showing 1-4 of 24 users
+    @if (usersResult != null && usersResult.TotalCount > 0)
+    {
+        <div class="table-pagination">
+            <div class="pagination-info">
+                Showing @((currentPage - 1) * pageSize + 1)-@(Math.Min(currentPage * pageSize, usersResult.TotalCount)) of @usersResult.TotalCount users
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" @onclick="PreviousPage" disabled="@(currentPage <= 1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                {
+                    <button class="pagination-btn @(i == currentPage ? "active" : "")" @onclick="() => GoToPage(i)">
+                        @i
+                    </button>
+                }
+                <button class="pagination-btn" @onclick="NextPage" disabled="@(currentPage >= totalPages)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
-        <div class="pagination-controls">
-            <button class="pagination-btn" disabled>
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="pagination-btn active">1</button>
-            <button class="pagination-btn">2</button>
-            <button class="pagination-btn">3</button>
-            <button class="pagination-btn">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
+    }
 </div>
 
 @code {
-    // Mock data and component logic will go here later
+    private UserStatsDto? userStats;
+    private PagedResult<UserDto>? usersResult;
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private string selectedRole = string.Empty;
+    private string selectedStatus = string.Empty;
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages => usersResult != null ? (int)Math.Ceiling((double)usersResult.TotalCount / pageSize) : 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Load user statistics
+            userStats = await UserManagementService.GetUserStatisticsAsync();
+
+            // Load users
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        var searchCriteria = new UserSearchCriteria
+        {
+            Email = searchTerm,
+            UserName = searchTerm,
+            PageNumber = currentPage,
+            PageSize = pageSize,
+            SortBy = "email",
+            SortDescending = false
+        };
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(selectedStatus))
+        {
+            switch (selectedStatus.ToLower())
+            {
+                case "active":
+                    searchCriteria.EmailConfirmed = true;
+                    searchCriteria.IsLockedOut = false;
+                    break;
+                case "locked":
+                    searchCriteria.IsLockedOut = true;
+                    break;
+                case "pending":
+                    searchCriteria.EmailConfirmed = false;
+                    break;
+            }
+        }
+
+        usersResult = await UserManagementService.GetUsersAsync(searchCriteria);
+    }
+
+    private async Task SearchUsers()
+    {
+        currentPage = 1;
+        await LoadUsers();
+    }
+
+    private async Task OnSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchUsers();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page != currentPage && page >= 1 && page <= totalPages)
+        {
+            currentPage = page;
+            await LoadUsers();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadUsers();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadUsers();
+        }
+    }
+
+    private void EditUser(string userId)
+    {
+        Navigation.NavigateTo($"/admin/users/{userId}");
+    }
+
+    private async Task LockUser(string userId)
+    {
+        try
+        {
+            var result = await UserManagementService.LockUserAsync(userId);
+            if (result.Succeeded)
+            {
+                await LoadUsers();
+                await LoadUserStats();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error locking user: {ex.Message}");
+        }
+    }
+
+    private async Task UnlockUser(string userId)
+    {
+        try
+        {
+            var result = await UserManagementService.UnlockUserAsync(userId);
+            if (result.Succeeded)
+            {
+                await LoadUsers();
+                await LoadUserStats();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error unlocking user: {ex.Message}");
+        }
+    }
+
+    private async Task ResendConfirmation(string userId)
+    {
+        try
+        {
+            var result = await UserManagementService.ResendEmailConfirmationAsync(userId);
+            if (result.Succeeded)
+            {
+                // Could show a success message here
+                Console.WriteLine("Email confirmation resent successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resending confirmation: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserStats()
+    {
+        userStats = await UserManagementService.GetUserStatisticsAsync();
+        StateHasChanged();
+    }
+
+    private string GetUserInitials(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return "?";
+
+        var parts = name.Split('@')[0].Split('.');
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        }
+        
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+    }
+
+    private string GetUserStatus(UserDto user)
+    {
+        if (IsUserLocked(user))
+            return "Locked";
+        if (!user.EmailConfirmed)
+            return "Pending";
+        return "Active";
+    }
+
+    private string GetUserStatusClass(UserDto user)
+    {
+        if (IsUserLocked(user))
+            return "locked";
+        if (!user.EmailConfirmed)
+            return "pending";
+        return "active";
+    }
+
+    private bool IsUserLocked(UserDto user)
+    {
+        return user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+    }
 }

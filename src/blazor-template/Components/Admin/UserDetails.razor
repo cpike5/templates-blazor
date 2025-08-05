@@ -1,9 +1,13 @@
 ﻿@page "/admin/users/{UserId}"
 @using BlazorTemplate.Components.Layout
 @using BlazorTemplate.Data
+@using BlazorTemplate.DTO
+@using BlazorTemplate.Services
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@inject IUserManagementService UserManagementService
+@inject NavigationManager Navigation
 
 <style>
     .user-details-container {
@@ -607,48 +611,62 @@
     <nav class="breadcrumb-nav">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
-            <li class="breadcrumb-item active">John Doe</li>
+            <li class="breadcrumb-item active">@(userDetail?.UserName ?? "Loading...")</li>
         </ol>
     </nav>
 
     <!-- User Header -->
     <div class="user-header">
         <div class="user-avatar-large">
-            JD
+            @GetUserInitials(userDetail?.UserName ?? userDetail?.Email ?? "?")
             <div class="status-indicator"></div>
         </div>
         <div class="user-basic-info">
-            <h1>John Doe</h1>
+            <h1>@(userDetail?.UserName ?? "Loading...")</h1>
             <div class="user-meta">
                 <div class="meta-item">
                     <i class="fas fa-envelope"></i>
-                    <span>john.doe@company.com</span>
+                    <span>@(userDetail?.Email ?? "")</span>
                 </div>
                 <div class="meta-item">
                     <i class="fas fa-calendar"></i>
-                    <span>Member since Jan 3, 2024</span>
+                    <span>Member since @(userDetail?.CreatedAt.ToString("MMM d, yyyy") ?? "")</span>
                 </div>
                 <div class="meta-item">
                     <i class="fas fa-clock"></i>
-                    <span>Last login: Jan 14, 4:45 PM</span>
+                    <span>Last login: Never</span>
                 </div>
             </div>
             <div class="user-badges">
-                <span class="status-badge active">
+                <span class="status-badge @GetUserStatusClass()">
                     <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
-                    Active
+                    @GetUserStatus()
                 </span>
-                <span class="role-badge user">User</span>
+                @if (userDetail?.Roles?.Any() == true)
+                {
+                    @foreach (var role in userDetail.Roles)
+                    {
+                        <span class="role-badge @role.ToLower()">@role</span>
+                    }
+                }
             </div>
         </div>
         <div class="user-actions">
-            <button class="btn btn-outline-primary">
+            <button class="btn btn-outline-primary" @onclick="ResendEmailConfirmation" disabled="@(userDetail?.EmailConfirmed == true)">
                 <i class="fas fa-envelope me-1"></i>
-                Send Email
+                Resend Email
             </button>
-            <button class="btn btn-primary">
-                <i class="fas fa-save me-1"></i>
-                Save Changes
+            <button class="btn btn-primary" @onclick="SaveChanges" disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <i class="fas fa-spinner fa-spin me-1"></i>
+                    <text>Saving...</text>
+                }
+                else
+                {
+                    <i class="fas fa-save me-1"></i>
+                    <text>Save Changes</text>
+                }
             </button>
         </div>
     </div>
@@ -668,31 +686,40 @@
                 <div class="section-body">
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" value="John" />
+                            <label class="form-label">User Name</label>
+                            <input type="text" class="form-control" @bind="editModel.UserName" />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" class="form-control" value="Doe" />
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" @bind="editModel.Email" />
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" value="john.doe@company.com" disabled />
-                        <div class="form-help">Email address cannot be changed directly. User must verify new email.</div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" value="+1 (555) 123-4567" />
+                            <input type="tel" class="form-control" @bind="editModel.PhoneNumber" />
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Department</label>
-                            <select class="form-control">
-                                <option selected>Engineering</option>
-                                <option>Marketing</option>
-                                <option>Sales</option>
-                                <option>Support</option>
+                            <label class="form-label">Email Confirmed</label>
+                            <select class="form-control" @bind="editModel.EmailConfirmed">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Two-Factor Authentication</label>
+                            <select class="form-control" @bind="editModel.TwoFactorEnabled">
+                                <option value="true">Enabled</option>
+                                <option value="false">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Lockout Enabled</label>
+                            <select class="form-control" @bind="editModel.LockoutEnabled">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
                             </select>
                         </div>
                     </div>
@@ -709,42 +736,22 @@
                 </div>
                 <div class="section-body">
                     <div class="role-assignment">
-                        <div class="role-item assigned">
-                            <div class="role-info">
-                                <div class="role-icon-sm user">
-                                    <i class="fas fa-user"></i>
+                        @foreach (var role in availableRoles)
+                        {
+                            var isAssigned = editModel.Roles.Contains(role.Name);
+                            <div class="role-item @(isAssigned ? "assigned" : "")">
+                                <div class="role-info">
+                                    <div class="role-icon-sm @role.Name.ToLower()">
+                                        <i class="fas @GetRoleIcon(role.Name)"></i>
+                                    </div>
+                                    <div class="role-details">
+                                        <h6>@role.Name</h6>
+                                        <small>@GetRoleDescription(role.Name)</small>
+                                    </div>
                                 </div>
-                                <div class="role-details">
-                                    <h6>User</h6>
-                                    <small>Standard user access</small>
-                                </div>
+                                <button class="role-toggle @(isAssigned ? "active" : "")" @onclick="() => ToggleRole(role.Name)"></button>
                             </div>
-                            <button class="role-toggle active"></button>
-                        </div>
-                        <div class="role-item">
-                            <div class="role-info">
-                                <div class="role-icon-sm manager">
-                                    <i class="fas fa-user-tie"></i>
-                                </div>
-                                <div class="role-details">
-                                    <h6>Manager</h6>
-                                    <small>Team management capabilities</small>
-                                </div>
-                            </div>
-                            <button class="role-toggle"></button>
-                        </div>
-                        <div class="role-item">
-                            <div class="role-info">
-                                <div class="role-icon-sm administrator">
-                                    <i class="fas fa-crown"></i>
-                                </div>
-                                <div class="role-details">
-                                    <h6>Administrator</h6>
-                                    <small>Full system access and control</small>
-                                </div>
-                            </div>
-                            <button class="role-toggle"></button>
-                        </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -764,36 +771,43 @@
                     <div class="status-item">
                         <div>
                             <div class="status-label">Account Status</div>
-                            <select class="form-control">
-                                <option selected>Active</option>
-                                <option>Locked</option>
-                                <option>Suspended</option>
-                            </select>
+                            <div class="status-value @GetUserStatusClass()">
+                                <i class="fas @GetStatusIcon()"></i>
+                                @GetUserStatus()
+                            </div>
                         </div>
                     </div>
                     <div class="status-item">
                         <div>
                             <div class="status-label">Email Verified</div>
-                            <div class="status-value success">
-                                <i class="fas fa-check-circle"></i>
-                                Verified
+                            <div class="status-value @(userDetail?.EmailConfirmed == true ? "success" : "warning")">
+                                <i class="fas @(userDetail?.EmailConfirmed == true ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                @(userDetail?.EmailConfirmed == true ? "Verified" : "Not Verified")
                             </div>
                         </div>
-                        <button class="btn btn-outline-primary btn-sm">
-                            Resend Verification
-                        </button>
+                        @if (userDetail?.EmailConfirmed != true)
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="ResendEmailConfirmation">
+                                Resend Verification
+                            </button>
+                        }
                     </div>
                     <div class="status-item">
                         <div>
                             <div class="status-label">Two-Factor Authentication</div>
-                            <div class="status-value warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Not Enabled
+                            <div class="status-value @(userDetail?.TwoFactorEnabled == true ? "success" : "warning")">
+                                <i class="fas @(userDetail?.TwoFactorEnabled == true ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                @(userDetail?.TwoFactorEnabled == true ? "Enabled" : "Not Enabled")
                             </div>
                         </div>
-                        <button class="btn btn-outline-primary btn-sm">
-                            Force Enable
-                        </button>
+                    </div>
+                    <div class="status-item">
+                        <div>
+                            <div class="status-label">Access Failed Count</div>
+                            <div class="status-value">
+                                @(userDetail?.AccessFailedCount ?? 0)
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -808,36 +822,33 @@
                 </div>
                 <div class="section-body">
                     <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon login">
-                                <i class="fas fa-sign-in-alt"></i>
+                        @if (userDetail?.RecentActivity?.Any() == true)
+                        {
+                            @foreach (var activity in userDetail.RecentActivity)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon @GetActivityIconClass(activity.Action)">
+                                        <i class="fas @GetActivityIcon(activity.Action)"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <h6>@activity.Action</h6>
+                                        <small>@activity.Details</small>
+                                        @if (!string.IsNullOrEmpty(activity.IpAddress))
+                                        {
+                                            <small>From @activity.IpAddress</small>
+                                        }
+                                    </div>
+                                    <div class="activity-time">@GetTimeAgo(activity.Timestamp)</div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-history me-2"></i>
+                                No recent activity found.
                             </div>
-                            <div class="activity-details">
-                                <h6>User logged in</h6>
-                                <small>From 192.168.1.100</small>
-                            </div>
-                            <div class="activity-time">2h ago</div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon update">
-                                <i class="fas fa-user-edit"></i>
-                            </div>
-                            <div class="activity-details">
-                                <h6>Profile updated</h6>
-                                <small>Phone number changed</small>
-                            </div>
-                            <div class="activity-time">1d ago</div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon logout">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </div>
-                            <div class="activity-details">
-                                <h6>User logged out</h6>
-                                <small>Session expired</small>
-                            </div>
-                            <div class="activity-time">2d ago</div>
-                        </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -854,11 +865,11 @@
                     <div class="danger-actions">
                         <div class="danger-action">
                             <div class="danger-info">
-                                <h6>Lock Account</h6>
-                                <small>Prevent user from logging in</small>
+                                <h6>@(IsUserLocked() ? "Unlock Account" : "Lock Account")</h6>
+                                <small>@(IsUserLocked() ? "Allow user to login" : "Prevent user from logging in")</small>
                             </div>
-                            <button class="btn btn-outline-danger btn-sm">
-                                Lock Account
+                            <button class="btn btn-outline-danger btn-sm" @onclick="ToggleLockUser">
+                                @(IsUserLocked() ? "Unlock Account" : "Lock Account")
                             </button>
                         </div>
                         <div class="danger-action">
@@ -866,7 +877,7 @@
                                 <h6>Reset Password</h6>
                                 <small>Force user to create new password</small>
                             </div>
-                            <button class="btn btn-outline-danger btn-sm">
+                            <button class="btn btn-outline-danger btn-sm" @onclick="ResetPassword">
                                 Reset Password
                             </button>
                         </div>
@@ -875,7 +886,7 @@
                                 <h6>Delete Account</h6>
                                 <small>Permanently remove user account</small>
                             </div>
-                            <button class="btn btn-danger btn-sm">
+                            <button class="btn btn-danger btn-sm" @onclick="DeleteUser">
                                 Delete Account
                             </button>
                         </div>
@@ -889,5 +900,281 @@
 @code {
     [Parameter] public string UserId { get; set; } = string.Empty;
 
-    // Mock data and component logic will go here later
+    private UserDetailDto? userDetail;
+    private UpdateUserRequest editModel = new();
+    private List<RoleInfo> availableRoles = new();
+    private bool isLoading = true;
+    private bool isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserDetail();
+        await LoadAvailableRoles();
+    }
+
+    private async Task LoadUserDetail()
+    {
+        isLoading = true;
+        try
+        {
+            userDetail = await UserManagementService.GetUserByIdAsync(UserId);
+            if (userDetail != null)
+            {
+                editModel = new UpdateUserRequest
+                {
+                    Email = userDetail.Email,
+                    UserName = userDetail.UserName,
+                    PhoneNumber = userDetail.PhoneNumber,
+                    EmailConfirmed = userDetail.EmailConfirmed,
+                    TwoFactorEnabled = userDetail.TwoFactorEnabled,
+                    LockoutEnabled = userDetail.LockoutEnabled,
+                    Roles = userDetail.Roles.ToList()
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user detail: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAvailableRoles()
+    {
+        // Mock available roles - in a real app, you'd get these from a role service
+        availableRoles = new List<RoleInfo>
+        {
+            new RoleInfo { Name = "User" },
+            new RoleInfo { Name = "Manager" },
+            new RoleInfo { Name = "Administrator" }
+        };
+    }
+
+    private async Task SaveChanges()
+    {
+        if (userDetail == null) return;
+
+        isSaving = true;
+        try
+        {
+            var result = await UserManagementService.UpdateUserAsync(UserId, editModel);
+            if (result.Succeeded)
+            {
+                await LoadUserDetail(); // Reload to get updated data
+                Console.WriteLine("User updated successfully");
+            }
+            else
+            {
+                Console.WriteLine($"Error updating user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving changes: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleLockUser()
+    {
+        if (userDetail == null) return;
+
+        try
+        {
+            var result = IsUserLocked() 
+                ? await UserManagementService.UnlockUserAsync(UserId)
+                : await UserManagementService.LockUserAsync(UserId);
+                
+            if (result.Succeeded)
+            {
+                await LoadUserDetail();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling user lock: {ex.Message}");
+        }
+    }
+
+    private async Task ResetPassword()
+    {
+        try
+        {
+            var newPassword = "TempPassword123!"; // In a real app, generate a secure password
+            var result = await UserManagementService.ResetUserPasswordAsync(UserId, newPassword);
+            if (result.Succeeded)
+            {
+                Console.WriteLine($"Password reset successfully. New password: {newPassword}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resetting password: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteUser()
+    {
+        try
+        {
+            var result = await UserManagementService.DeleteUserAsync(UserId);
+            if (result.Succeeded)
+            {
+                Navigation.NavigateTo("/admin/users");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting user: {ex.Message}");
+        }
+    }
+
+    private async Task ResendEmailConfirmation()
+    {
+        try
+        {
+            var result = await UserManagementService.ResendEmailConfirmationAsync(UserId);
+            if (result.Succeeded)
+            {
+                Console.WriteLine("Email confirmation resent successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resending email confirmation: {ex.Message}");
+        }
+    }
+
+    private void ToggleRole(string roleName)
+    {
+        if (editModel.Roles.Contains(roleName))
+        {
+            editModel.Roles.Remove(roleName);
+        }
+        else
+        {
+            editModel.Roles.Add(roleName);
+        }
+        StateHasChanged();
+    }
+
+    private string GetUserInitials(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return "?";
+
+        var parts = name.Split('@')[0].Split('.');
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+        }
+        
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpper() : name.ToUpper();
+    }
+
+    private string GetUserStatus()
+    {
+        if (userDetail == null) return "Unknown";
+        if (IsUserLocked()) return "Locked";
+        if (!userDetail.EmailConfirmed) return "Pending";
+        return "Active";
+    }
+
+    private string GetUserStatusClass()
+    {
+        if (userDetail == null) return "";
+        if (IsUserLocked()) return "warning";
+        if (!userDetail.EmailConfirmed) return "warning";
+        return "success";
+    }
+
+    private string GetStatusIcon()
+    {
+        if (userDetail == null) return "fa-question";
+        if (IsUserLocked()) return "fa-lock";
+        if (!userDetail.EmailConfirmed) return "fa-clock";
+        return "fa-check-circle";
+    }
+
+    private bool IsUserLocked()
+    {
+        return userDetail?.LockoutEnd.HasValue == true && userDetail.LockoutEnd > DateTimeOffset.UtcNow;
+    }
+
+    private string GetRoleIcon(string roleName)
+    {
+        return roleName.ToLower() switch
+        {
+            "administrator" => "fa-crown",
+            "manager" => "fa-user-tie",
+            "user" => "fa-user",
+            _ => "fa-user"
+        };
+    }
+
+    private string GetRoleDescription(string roleName)
+    {
+        return roleName.ToLower() switch
+        {
+            "administrator" => "Full system access and control",
+            "manager" => "Team management capabilities",
+            "user" => "Standard user access",
+            _ => "Standard access"
+        };
+    }
+
+    private string GetActivityIcon(string action)
+    {
+        return action.ToLower() switch
+        {
+            "usercreated" => "fa-user-plus",
+            "userupdated" => "fa-user-edit",
+            "userdeleted" => "fa-user-times",
+            "userlocked" => "fa-lock",
+            "userunlocked" => "fa-unlock",
+            "passwordreset" => "fa-key",
+            "emailconfirmationresent" => "fa-envelope",
+            "emailconfirmed" => "fa-check-circle",
+            "roleassigned" => "fa-user-tag",
+            "roleremoved" => "fa-user-minus",
+            _ => "fa-info-circle"
+        };
+    }
+
+    private string GetActivityIconClass(string action)
+    {
+        return action.ToLower() switch
+        {
+            "usercreated" => "login",
+            "userupdated" => "update",
+            "userdeleted" => "logout",
+            "userlocked" => "logout",
+            "userunlocked" => "login",
+            "passwordreset" => "update",
+            _ => "update"
+        };
+    }
+
+    private string GetTimeAgo(DateTime timestamp)
+    {
+        var timeSpan = DateTime.UtcNow - timestamp;
+        if (timeSpan.TotalMinutes < 1) return "just now";
+        if (timeSpan.TotalHours < 1) return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalDays < 1) return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays}d ago";
+        return timestamp.ToString("MMM d, yyyy");
+    }
+
+    private class RoleInfo
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 }
