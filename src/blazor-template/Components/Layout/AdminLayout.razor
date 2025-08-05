@@ -1,0 +1,408 @@
+﻿@inherits LayoutComponentBase
+@using BlazorTemplate.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserRoleService RoleService
+
+<div class="admin-layout-wrapper">
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <button class="admin-sidebar-toggle" id="adminSidebarToggle" onclick="toggleAdminSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="admin-breadcrumb">
+                <i class="fas fa-cogs"></i>
+                <span>Administration</span>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">@GetCurrentPageTitle()</span>
+            </div>
+        </div>
+        <div class="admin-header-right">
+            <div class="admin-user-info">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="admin-user-name">@context.User.FindFirst(ClaimTypes.Email)?.Value</span>
+                        <div class="admin-user-avatar">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Sidebar -->
+    <nav class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-header">
+            <div class="admin-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>Admin Panel</span>
+            </div>
+        </div>
+        
+        <div class="admin-nav-items">
+            <div class="admin-nav-section">
+                <div class="admin-nav-section-title">Overview</div>
+                <NavLink href="/admin" class="admin-nav-link" Match="NavLinkMatch.All">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </NavLink>
+            </div>
+
+            <div class="admin-nav-section">
+                <div class="admin-nav-section-title">User Management</div>
+                <NavLink href="/admin/users" class="admin-nav-link" Match="NavLinkMatch.Prefix">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </NavLink>
+                <NavLink href="/admin/roles" class="admin-nav-link" Match="NavLinkMatch.Prefix">
+                    <i class="fas fa-user-tag"></i>
+                    <span>Roles</span>
+                </NavLink>
+                <NavLink href="/admin/roles/new" class="admin-nav-link" Match="NavLinkMatch.Prefix">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Create Role</span>
+                </NavLink>
+            </div>
+
+            <div class="admin-nav-section">
+                <div class="admin-nav-section-title">System</div>
+                <NavLink href="/admin/settings" class="admin-nav-link" Match="NavLinkMatch.Prefix">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </NavLink>
+                <NavLink href="/admin/logs" class="admin-nav-link" Match="NavLinkMatch.Prefix">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </NavLink>
+            </div>
+
+            <div class="admin-nav-section">
+                <div class="admin-nav-section-title">Actions</div>
+                <NavLink href="/" class="admin-nav-link exit-admin">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Exit Admin</span>
+                </NavLink>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay" onclick="toggleAdminSidebar()"></div>
+
+    <!-- Main Admin Content -->
+    <main class="admin-main-content">
+        @Body
+    </main>
+</div>
+
+<style>
+    .admin-layout-wrapper {
+        display: grid;
+        grid-template-areas: 
+            "sidebar header"
+            "sidebar main";
+        grid-template-columns: 280px 1fr;
+        grid-template-rows: 70px 1fr;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+    }
+
+    .admin-header {
+        grid-area: header;
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+
+    .admin-header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .admin-sidebar-toggle {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+    }
+
+    .admin-sidebar-toggle:hover {
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+
+    .admin-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .breadcrumb-separator {
+        color: #adb5bd;
+    }
+
+    .breadcrumb-current {
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .admin-header-right {
+        display: flex;
+        align-items: center;
+    }
+
+    .admin-user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .admin-user-name {
+        font-size: 14px;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .admin-user-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+    }
+
+    .admin-sidebar {
+        grid-area: sidebar;
+        background: #2c3e50;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        z-index: 200;
+    }
+
+    .admin-sidebar-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .admin-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #ecf0f1;
+    }
+
+    .admin-logo i {
+        font-size: 20px;
+        color: #3498db;
+    }
+
+    .admin-nav-items {
+        flex: 1;
+        padding: 24px 0;
+        overflow-y: auto;
+    }
+
+    .admin-nav-section {
+        margin-bottom: 24px;
+    }
+
+    .admin-nav-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #95a5a6;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0 24px 12px;
+    }
+
+    .admin-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 24px;
+        color: #bdc3c7;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+
+    .admin-nav-link:hover {
+        background-color: rgba(255,255,255,0.05);
+        color: #ecf0f1;
+        border-left-color: #3498db;
+    }
+
+    .admin-nav-link.active {
+        background-color: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+        border-left-color: #3498db;
+    }
+
+    .admin-nav-link i {
+        width: 16px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .admin-nav-link span {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .admin-nav-link.exit-admin {
+        color: #e74c3c;
+    }
+
+    .admin-nav-link.exit-admin:hover {
+        background-color: rgba(231, 76, 60, 0.1);
+        border-left-color: #e74c3c;
+    }
+
+    .admin-main-content {
+        grid-area: main;
+        padding: 24px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+    }
+
+    .admin-sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 150;
+    }
+
+    /* Mobile Responsive */
+    @@media (max-width: 768px) {
+        .admin-layout-wrapper {
+            grid-template-areas: 
+                "header header"
+                "main main";
+            grid-template-columns: 1fr;
+            grid-template-rows: 70px 1fr;
+        }
+
+        .admin-sidebar-toggle {
+            display: block;
+        }
+
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            bottom: 0;
+            width: 280px;
+            transition: left 0.3s ease;
+            z-index: 200;
+        }
+
+        .admin-sidebar.open {
+            left: 0;
+        }
+
+        .admin-sidebar-overlay.open {
+            display: block;
+        }
+
+        .admin-main-content {
+            padding: 16px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .admin-breadcrumb {
+            display: none;
+        }
+
+        .admin-user-name {
+            display: none;
+        }
+
+        .admin-main-content {
+            padding: 12px;
+        }
+
+        .admin-sidebar {
+            width: 260px;
+            left: -260px;
+        }
+    }
+</style>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+<script>
+    function toggleAdminSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('adminSidebarOverlay');
+        
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+    }
+
+    // Close sidebar when clicking on a nav link on mobile
+    document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('.admin-nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.getElementById('adminSidebar');
+                    const overlay = document.getElementById('adminSidebarOverlay');
+                    if (sidebar && overlay) {
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('open');
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+@code {
+    private string GetCurrentPageTitle()
+    {
+        var uri = Navigation.Uri;
+        if (uri.EndsWith("/admin/users")) return "Users";
+        if (uri.EndsWith("/admin/roles")) return "Roles";
+        if (uri.EndsWith("/admin/roles/new")) return "Create Role";
+        if (uri.EndsWith("/admin/settings")) return "Settings";
+        if (uri.EndsWith("/admin/logs")) return "Logs";
+        if (uri.EndsWith("/admin")) return "Dashboard";
+        return "Dashboard";
+    }
+
+    [Inject] public NavigationManager Navigation { get; set; } = default!;
+}
