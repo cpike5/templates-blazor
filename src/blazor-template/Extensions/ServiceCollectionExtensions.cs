@@ -21,7 +21,8 @@ namespace BlazorTemplate.Extensions
         }
 
         public static IServiceCollection AddAdminServices(this IServiceCollection services)
-        {
+        {            
+            services.AddScoped<IUserManagementService, UserManagementService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
             services.AddScoped<IAdminRoleService, AdminRoleService>();
             return services;
