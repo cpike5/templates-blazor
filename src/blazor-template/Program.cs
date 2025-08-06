@@ -1,9 +1,12 @@
+using BlazorTemplate.Authorization;
 using BlazorTemplate.Components;
 using BlazorTemplate.Components.Account;
 using BlazorTemplate.Configuration;
 using BlazorTemplate.Data;
 using BlazorTemplate.Extensions;
+using BlazorTemplate.Middleware;
 using BlazorTemplate.Services;
+using BlazorTemplate.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -56,8 +59,8 @@ namespace BlazorTemplate
 
             var authBuilder = builder.Services.AddAuthentication(options =>
                 {
-                    options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
-                    options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
                 });
 
             authBuilder.AddIdentityCookies();
@@ -110,13 +113,51 @@ namespace BlazorTemplate
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-            // Add Authorization services
-            builder.Services.AddAuthorizationBuilder()
-                .AddPolicy("AdminOnly", policy => policy.RequireRole("Administrator"))
-                .AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Administrator"));
+            // Add Authorization services with custom handler
+            builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ManageOwnAccountHandler>();
+            
+            builder.Services.AddAuthorization(options =>
+            {
+                // Configure API authorization policies
+                ApiPolicies.ConfigurePolicies(options);
+            });
 
             // Add API services
             builder.Services.AddControllers();
+
+            // Add API Versioning
+            builder.Services.AddApiVersioning(options =>
+            {
+                options.DefaultVersion = new BlazorTemplate.Middleware.ApiVersion(1, 0);
+                options.SupportedVersions = new List<BlazorTemplate.Middleware.ApiVersion>
+                {
+                    new BlazorTemplate.Middleware.ApiVersion(1, 0),
+                    new BlazorTemplate.Middleware.ApiVersion(1, 1)
+                };
+                options.AssumeDefaultVersionWhenUnspecified = true;
+            });
+
+            // Add Rate Limiting
+            if (builder.Configuration.GetValue<bool>("Api:RateLimiting:EnableRateLimiting"))
+            {
+                builder.Services.AddRateLimiting(options =>
+                {
+                    options.EnableRateLimiting = true;
+                    
+                    var generalLimit = builder.Configuration["Api:RateLimiting:GeneralRateLimit"];
+                    var authLimit = builder.Configuration["Api:RateLimiting:AuthRateLimit"];
+
+                    if (!string.IsNullOrEmpty(generalLimit))
+                    {
+                        options.AuthenticatedUserLimit = RateLimitRule.Parse(generalLimit, "General");
+                    }
+
+                    if (!string.IsNullOrEmpty(authLimit))
+                    {
+                        options.AuthEndpointLimit = RateLimitRule.Parse(authLimit, "Auth");
+                    }
+                });
+            }
             
             // Add CORS
             if (builder.Configuration.GetValue<bool>("Api:EnableCors"))
@@ -140,15 +181,44 @@ namespace BlazorTemplate
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>
                 {
-                    c.SwaggerDoc("v1", new() { Title = "Blazor Template API", Version = "v1" });
+                    // API Documentation
+                    c.SwaggerDoc("v1", new()
+                    {
+                        Title = "Blazor Template API",
+                        Version = "v1",
+                        Description = "A comprehensive API for user management and authentication in the Blazor template application.",
+                        Contact = new()
+                        {
+                            Name = "API Support",
+                            Email = "api-support@blazortemplate.com"
+                        },
+                        License = new()
+                        {
+                            Name = "MIT License",
+                            Url = new Uri("https://opensource.org/licenses/MIT")
+                        }
+                    });
+
+                    // Include XML comments for better documentation
+                    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+                    if (File.Exists(xmlPath))
+                    {
+                        c.IncludeXmlComments(xmlPath);
+                    }
+
+                    // Security scheme for JWT
                     c.AddSecurityDefinition("Bearer", new()
                     {
-                        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
                         Name = "Authorization",
+                        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
                         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-                        Scheme = "Bearer"
+                        Description = "JWT Authorization header using the Bearer scheme. Enter your token below."
                     });
+
+                    // Global security requirement
                     c.AddSecurityRequirement(new()
                     {
                         {
@@ -163,6 +233,18 @@ namespace BlazorTemplate
                             Array.Empty<string>()
                         }
                     });
+
+                    // Custom operation filters
+                    c.EnableAnnotations();
+                    c.UseInlineDefinitionsForEnums();
+                    
+                    // Custom schema IDs
+                    c.CustomSchemaIds(type => type.FullName);
+
+                    // Response examples and filters
+                    c.SchemaFilter<SwaggerExampleSchemaFilter>();
+                    c.OperationFilter<SwaggerDefaultResponsesOperationFilter>();
+                    c.OperationFilter<SwaggerAuthorizationOperationFilter>();
                 });
             }
 
@@ -207,6 +289,9 @@ namespace BlazorTemplate
                 app.UseHsts();
             }
 
+            // Add API error handling for all environments
+            app.UseApiErrorHandling();
+
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
@@ -216,6 +301,15 @@ namespace BlazorTemplate
             if (app.Configuration.GetValue<bool>("Api:EnableCors"))
             {
                 app.UseCors("ApiPolicy");
+            }
+
+            // Enable API Versioning
+            app.UseApiVersioning();
+
+            // Enable Rate Limiting (before authentication)
+            if (app.Configuration.GetValue<bool>("Api:RateLimiting:EnableRateLimiting"))
+            {
+                app.UseRateLimiting();
             }
             
             app.UseAuthentication();

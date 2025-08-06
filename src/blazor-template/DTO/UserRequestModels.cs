@@ -4,16 +4,30 @@ namespace BlazorTemplate.DTO
 {
     public class UserSearchCriteria
     {
+        [EmailAddress]
+        [StringLength(256)]
         public string? Email { get; set; }
+
+        [StringLength(256)]
         public string? UserName { get; set; }
+
+        [StringLength(50)]
         public string? Role { get; set; }
+
         public bool? EmailConfirmed { get; set; }
         public bool? IsLockedOut { get; set; }
         public DateTime? CreatedAfter { get; set; }
         public DateTime? CreatedBefore { get; set; }
+
+        [StringLength(50)]
         public string SortBy { get; set; } = "Email";
+
         public bool SortDescending { get; set; } = false;
+
+        [Range(1, int.MaxValue)]
         public int PageNumber { get; set; } = 1;
+
+        [Range(1, 100)]
         public int PageSize { get; set; } = 10;
     }
 

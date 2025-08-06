@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace BlazorTemplate.DTO.Api
 {
     public class ApiResponse<T>
@@ -19,8 +21,15 @@ namespace BlazorTemplate.DTO.Api
 
     public class LoginRequest
     {
+        [Required]
+        [EmailAddress]
+        [StringLength(256, MinimumLength = 5)]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100, MinimumLength = 6)]
         public string Password { get; set; } = string.Empty;
+
         public bool RememberMe { get; set; }
     }
 
@@ -44,11 +53,15 @@ namespace BlazorTemplate.DTO.Api
 
     public class RefreshTokenRequest
     {
+        [Required]
+        [StringLength(500, MinimumLength = 10)]
         public string RefreshToken { get; set; } = string.Empty;
     }
 
     public class RevokeTokenRequest
     {
+        [Required]
+        [StringLength(500, MinimumLength = 10)]
         public string RefreshToken { get; set; } = string.Empty;
     }
 
