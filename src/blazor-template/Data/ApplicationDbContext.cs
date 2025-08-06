@@ -8,6 +8,7 @@ namespace BlazorTemplate.Data
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<InviteCode> InviteCodes { get; set; }
         public DbSet<EmailInvite> EmailInvites { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -63,6 +64,20 @@ namespace BlazorTemplate.Data
                     .WithMany()
                     .HasForeignKey(e => e.UsedByUserId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure RefreshToken entity
+            builder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasIndex(e => e.Token).IsUnique();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.ExpiryDate);
+                entity.HasIndex(e => new { e.UserId, e.IsRevoked });
+                
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

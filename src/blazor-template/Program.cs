@@ -4,11 +4,14 @@ using BlazorTemplate.Configuration;
 using BlazorTemplate.Data;
 using BlazorTemplate.Extensions;
 using BlazorTemplate.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Text;
 
 namespace BlazorTemplate
 {
@@ -34,6 +37,9 @@ namespace BlazorTemplate
             builder.Services.AddNavigationServices(builder.Configuration);
             builder.Services.AddAdminServices();
 
+            // Register JWT service
+            builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -44,10 +50,41 @@ namespace BlazorTemplate
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+            // Configure JWT
+            var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+            var key = Encoding.ASCII.GetBytes(jwtKey);
+
             var authBuilder = builder.Services.AddAuthentication(options =>
                 {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+                    options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
+                    options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+                });
+
+            authBuilder.AddIdentityCookies();
+            
+            authBuilder.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                })
+                .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+                {
+                    options.ForwardDefaultSelector = context =>
+                    {
+                        string? authorization = context.Request.Headers.Authorization;
+                        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                            return JwtBearerDefaults.AuthenticationScheme;
+                        return IdentityConstants.ApplicationScheme;
+                    };
                 });
 
             if (!string.IsNullOrEmpty(builder.Configuration["Authentication:Google:ClientId"]) && !string.IsNullOrEmpty(builder.Configuration["Authentication:Google:ClientSecret"]))
@@ -58,7 +95,6 @@ namespace BlazorTemplate
                     a.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
                 });
             }
-            authBuilder.AddIdentityCookies();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -78,6 +114,57 @@ namespace BlazorTemplate
             builder.Services.AddAuthorizationBuilder()
                 .AddPolicy("AdminOnly", policy => policy.RequireRole("Administrator"))
                 .AddPolicy("UserOrAdmin", policy => policy.RequireRole("User", "Administrator"));
+
+            // Add API services
+            builder.Services.AddControllers();
+            
+            // Add CORS
+            if (builder.Configuration.GetValue<bool>("Api:EnableCors"))
+            {
+                var allowedOrigins = builder.Configuration.GetSection("Api:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("ApiPolicy", policy =>
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    });
+                });
+            }
+
+            // Add Swagger
+            if (builder.Configuration.GetValue<bool>("Api:EnableSwagger"))
+            {
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new() { Title = "Blazor Template API", Version = "v1" });
+                    c.AddSecurityDefinition("Bearer", new()
+                    {
+                        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                        Name = "Authorization",
+                        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                        Scheme = "Bearer"
+                    });
+                    c.AddSecurityRequirement(new()
+                    {
+                        {
+                            new()
+                            {
+                                Reference = new()
+                                {
+                                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+                });
+            }
 
             if (firstTimeSetup)
             {
@@ -101,6 +188,17 @@ namespace BlazorTemplate
             if (app.Environment.IsDevelopment())
             {
                 app.UseMigrationsEndPoint();
+                
+                // Enable Swagger in development
+                if (app.Configuration.GetValue<bool>("Api:EnableSwagger"))
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI(c =>
+                    {
+                        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blazor Template API v1");
+                        c.RoutePrefix = "api/docs";
+                    });
+                }
             }
             else
             {
@@ -113,6 +211,12 @@ namespace BlazorTemplate
 
             app.UseStaticFiles();
             app.UseAntiforgery();
+
+            // Enable CORS
+            if (app.Configuration.GetValue<bool>("Api:EnableCors"))
+            {
+                app.UseCors("ApiPolicy");
+            }
             
             app.UseAuthentication();
             app.UseAuthorization();
@@ -122,6 +226,9 @@ namespace BlazorTemplate
 
             // Add additional endpoints required by the Identity /Account Razor components.
             app.MapAdditionalIdentityEndpoints();
+
+            // Map API controllers
+            app.MapControllers();
 
             app.Run();
         }
