@@ -122,3 +122,57 @@
         --color-warning: #dcce0f;
         --color-danger: #ea3106;
     }
+
+/* Dark Mode Styles */
+:root.dark-mode {
+    --color-light: #1e293b;
+    --color-dark: #f1f5f9;
+    --color-primary: #94a3b8;
+    --color-secondary: #cbd5e1;
+    --color-info: #334155;
+    --color-success: #22c55e;
+    --color-warning: #eab308;
+    --color-danger: #ef4444;
+}
+
+.dark-mode .top-navbar {
+    background-color: #1e293b;
+    border-bottom-color: #334155;
+}
+
+.dark-mode .sidebar {
+    background-color: #1e293b;
+    border-right-color: #334155;
+}
+
+.dark-mode .main-content {
+    background-color: #0f172a;
+}
+
+.dark-mode .card,
+.dark-mode .settings-section,
+.dark-mode .settings-header {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .dropdown-menu {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .dropdown-item:hover {
+    background-color: #334155;
+}
+
+.dark-mode .form-control,
+.dark-mode .btn-outline-secondary {
+    background-color: #334155;
+    border-color: #475569;
+    color: var(--color-dark);
+}
+
+.dark-mode .form-control:focus {
+    background-color: #475569;
+    border-color: var(--color-primary);
+}

@@ -54,8 +54,16 @@ body {
         color: var(--color-secondary);
     }
 
-.user-info {
+.nav-actions {
     margin-left: auto;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-info {
+    margin-left: 0;
     display: flex;
     align-items: center;
     gap: 1rem;

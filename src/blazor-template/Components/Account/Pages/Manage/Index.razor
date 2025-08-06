@@ -6,6 +6,7 @@
 @using BlazorTemplate.Components.Account.Shared
 @using BlazorTemplate.Data
 @using BlazorTemplate.Services
+@using BlazorTemplate.Components.Shared
 @using Microsoft.AspNetCore.Identity
 
 @inject UserManager<ApplicationUser> UserManager
@@ -308,6 +309,16 @@
         font-style: italic;
     }
 
+    .theme-switcher-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+    }
+
     /* Account Details */
     .account-details {
         display: grid;
@@ -525,6 +536,12 @@
                 <i class="fas fa-envelope me-2"></i>
                 Email Settings
             </a>
+        </div>
+
+        <div class="form-row">
+            <div class="theme-switcher-container">
+                <ThemeSwitcher />
+            </div>
         </div>
     </div>
 

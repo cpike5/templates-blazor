@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using BlazorTemplate.Services
+@inherits LayoutComponentBase
+@inject ThemeService ThemeService
 
 <div class="layout-wrapper">
     <TopNavbar />
@@ -22,8 +24,12 @@
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        Console.WriteLine($"MainLayout: OnAfterRenderAsync called with firstRender={firstRender}");
         if (firstRender)
         {
+            Console.WriteLine("MainLayout: Calling ThemeService.InitializeAsync");
+            await ThemeService.InitializeAsync(afterRender: true);
+            Console.WriteLine("MainLayout: ThemeService.InitializeAsync completed");
             await InvokeAsync(StateHasChanged);
         }
     }

@@ -1,0 +1,66 @@
+@rendermode InteractiveServer
+@using BlazorTemplate.Services
+@inject ThemeService ThemeService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="theme-switcher">
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" 
+                type="button" 
+                data-bs-toggle="dropdown">
+            <i class="fas fa-palette me-1"></i>Theme
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            @foreach (var theme in availableThemes)
+            {
+                <li>
+                    <button class="dropdown-item @(ThemeService.CurrentTheme == theme.Value ? "active" : "")" 
+                            @onclick="() => SetTheme(theme.Value)">
+                        @theme.Name
+                    </button>
+                </li>
+            }
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <button class="dropdown-item @(ThemeService.IsDarkMode ? "active" : "")" 
+                        @onclick="ToggleDarkMode">
+                    Dark Mode
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    private List<ThemeOption> availableThemes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableThemes = ThemeService.GetAvailableThemes();
+        ThemeService.OnThemeChanged += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync(afterRender: true);
+        }
+    }
+
+    private async Task SetTheme(string theme)
+    {
+        await ThemeService.SetThemeAsync(theme);
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await ThemeService.ToggleDarkModeAsync();
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+    }
+}

@@ -39,6 +39,7 @@ namespace BlazorTemplate
             builder.Services.Configure<ConfigurationOptions>(builder.Configuration.GetSection(ConfigurationOptions.SectionName));
             builder.Services.AddNavigationServices(builder.Configuration);
             builder.Services.AddAdminServices();
+            builder.Services.AddScoped<ThemeService>();
 
             // Register JWT service
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
