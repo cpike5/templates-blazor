@@ -1,0 +1,30 @@
+@rendermode InteractiveServer
+@using BlazorTemplate.Services
+@inject ThemeService ThemeService
+@implements IDisposable
+
+@* This component handles theme application at the layout level without UI *@
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize theme service early (server-side)
+        await ThemeService.EnsureInitializedAsync();
+        ThemeService.OnThemeChanged += StateHasChanged;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Sync with client-side localStorage and apply theme
+            await ThemeService.InitializeAsync(afterRender: true);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+    }
+}

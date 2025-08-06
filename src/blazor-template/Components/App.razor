@@ -1,7 +1,9 @@
-﻿@inject IConfiguration Configuration
+﻿@using BlazorTemplate.Services
+@inject IConfiguration Configuration
+@inject ThemeService ThemeService
 
 <!DOCTYPE html>
-<html lang="en" class="@ColorScheme">
+<html lang="en" class="@ThemeClasses">
 
 <head>
     <meta charset="utf-8" />
@@ -9,6 +11,9 @@
     <base href="/" />
     <title>@ApplicationTitle</title>
 
+    <!-- Theme initialization script - load early to prevent flash -->
+    <script src="js/theme.js"></script>
+    
     <!-- Core CSS Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
@@ -24,7 +29,6 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_framework/blazor.web.js"></script>
-    <script src="js/theme.js"></script>
 
     <script>
         window.blazorLayout = {
@@ -80,12 +84,41 @@
 </html>
 
 @code {
-    public string ApplicationTitle { get; set; }= "";
+    public string ApplicationTitle { get; set; } = "";
     public string ColorScheme { get; set; } = "";
+    public string ThemeClasses { get; set; } = "";
 
     protected override async Task OnInitializedAsync()
     {
         ApplicationTitle = Configuration["Site:Title"] ?? "Blazor Template";
         ColorScheme = Configuration["ColorScheme"] ?? "";
+        
+        // Initialize theme service and get server-side theme classes
+        await ThemeService.EnsureInitializedAsync();
+        ThemeClasses = GetThemeClasses();
+    }
+    
+    private string GetThemeClasses()
+    {
+        var classes = new List<string>();
+        
+        // Add color scheme if specified in config
+        if (!string.IsNullOrEmpty(ColorScheme))
+        {
+            classes.Add(ColorScheme);
+        }
+        
+        // Add theme classes from ThemeService
+        if (ThemeService.CurrentTheme != "default")
+        {
+            classes.Add(ThemeService.CurrentTheme);
+        }
+        
+        if (ThemeService.IsDarkMode)
+        {
+            classes.Add("dark-mode");
+        }
+        
+        return string.Join(" ", classes);
     }
 }
