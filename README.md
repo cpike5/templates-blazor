@@ -81,6 +81,68 @@ The setup process is managed by:
 
 To disable automatic setup after initial configuration, set `"SetupMode": false` in `appsettings.json`.
 
+## Guest User / Demo Mode
+
+The application includes a secure guest user system for demonstrations and public access:
+
+### Features
+
+- **Secure Password Generation**: Cryptographically secure random passwords generated at startup
+- **No Hard-coded Credentials**: Eliminates security risks from exposed passwords in configuration
+- **Console Logging**: Generated credentials displayed prominently for easy access
+- **Automatic Role Management**: Creates and assigns "Guest" role automatically
+- **Demo-Ready Account**: Email confirmed, lockout disabled for immediate use
+
+### Configuration
+
+Enable guest user in `appsettings.json`:
+
+```json
+{
+  "Site": {
+    "Setup": {
+      "EnableGuestUser": true,
+      "GuestUser": {
+        "Email": "guest@test.com"
+      }
+    }
+  }
+}
+```
+
+### Usage
+
+1. **Enable guest mode** by setting `EnableGuestUser: true`
+2. **Start the application** - guest account is created automatically
+3. **Check console output** for generated credentials:
+   ```
+   === GUEST USER CREDENTIALS ===
+   Email: guest@test.com
+   Password: [randomly generated secure password]
+   ===============================
+   ```
+4. **Login using displayed credentials** for demo access
+
+### Security Features
+
+- **Dynamic Password Generation**: New secure password generated each startup
+- **ASP.NET Identity Compliance**: 16-character passwords with uppercase, lowercase, digits, and special characters
+- **Cryptographic Security**: Uses `RandomNumberGenerator` for secure random generation
+- **No Configuration Exposure**: Passwords never stored in config files
+- **Role-Based Access**: Guest role can be configured with limited permissions
+
+### Development vs Production
+
+**Development Environment**:
+- Guest user enabled by default in `appsettings.Development.json`
+- Credentials logged to console and application logs
+- Suitable for local testing and development
+
+**Production Environment**:
+- Guest user disabled by default in `appsettings.json`
+- Enable only for public demonstrations
+- Consider additional security measures for public-facing deployments
+
 ## Navigation Configuration
 
 Edit the `Navigation` section in `appsettings.json` to configure menu items:

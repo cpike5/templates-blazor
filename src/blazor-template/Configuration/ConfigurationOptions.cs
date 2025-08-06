@@ -27,6 +27,56 @@
     public class GuestUserAccount
     {
         public string Email { get; set; } = "guest@test.com";
-        public string Password { get; set; } = ">a<cy2*U5MFjedHe";
+        public string Password { get; private set; } = string.Empty;
+
+        public GuestUserAccount()
+        {
+            Password = GenerateSecurePassword();
+        }
+
+        private static string GenerateSecurePassword()
+        {
+            using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            
+            // Generate a password that meets ASP.NET Identity requirements:
+            // - At least 6 characters (we'll use 16 for better security)
+            // - Contains uppercase letter, lowercase letter, digit, and special character
+            
+            const string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lowercase = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string special = "!@#$%^&*";
+            const string allChars = uppercase + lowercase + digits + special;
+            
+            var password = new char[16];
+            
+            // Ensure at least one character from each required category
+            password[0] = uppercase[GetRandomIndex(rng, uppercase.Length)];
+            password[1] = lowercase[GetRandomIndex(rng, lowercase.Length)];
+            password[2] = digits[GetRandomIndex(rng, digits.Length)];
+            password[3] = special[GetRandomIndex(rng, special.Length)];
+            
+            // Fill remaining positions with random characters from all categories
+            for (int i = 4; i < password.Length; i++)
+            {
+                password[i] = allChars[GetRandomIndex(rng, allChars.Length)];
+            }
+            
+            // Shuffle the password to avoid predictable patterns
+            for (int i = password.Length - 1; i > 0; i--)
+            {
+                int j = GetRandomIndex(rng, i + 1);
+                (password[i], password[j]) = (password[j], password[i]);
+            }
+            
+            return new string(password);
+        }
+        
+        private static int GetRandomIndex(System.Security.Cryptography.RandomNumberGenerator rng, int maxValue)
+        {
+            var bytes = new byte[4];
+            rng.GetBytes(bytes);
+            return (int)(BitConverter.ToUInt32(bytes, 0) % maxValue);
+        }
     }
 }

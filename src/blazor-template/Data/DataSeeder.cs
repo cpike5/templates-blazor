@@ -66,7 +66,13 @@ namespace BlazorTemplate.Data
                         _logger.LogInformation("Guest account is enabled but configured account does not exist.");
                         try
                         {
-                            _logger.LogInformation("Creating guest account");
+                            _logger.LogInformation("Creating guest account with email: {Email}", guest.Email);
+                            _logger.LogWarning("GUEST USER CREDENTIALS - Email: {Email}, Password: {Password}", guest.Email, guest.Password);
+                            Console.WriteLine($"=== GUEST USER CREDENTIALS ===");
+                            Console.WriteLine($"Email: {guest.Email}");
+                            Console.WriteLine($"Password: {guest.Password}");
+                            Console.WriteLine($"===============================");
+                            
                             var newUser = await userManager.CreateAsync(new ApplicationUser
                             {
                                 UserName = guest.Email,
