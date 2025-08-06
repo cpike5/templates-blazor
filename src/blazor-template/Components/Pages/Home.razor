@@ -1,9 +1,14 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 @using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Services
+@using BlazorTemplate.DTO
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
+@inject IUserManagementService UserManagementService
+@inject ILogger<Home> Logger
 
 @* Use a minimal layout for the landing page *@
 @layout BlazorTemplate.Components.Layout.MainLayout
@@ -224,6 +229,49 @@
         }
     }
 
+    /* Dashboard Styles */
+    .avatar-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .card-header h5, .card-header h6 {
+        margin-bottom: 0;
+    }
+
+    .opacity-75 {
+        opacity: 0.75 !important;
+    }
+
+    .card.bg-primary .card-title,
+    .card.bg-success .card-title,
+    .card.bg-warning .card-title,
+    .card.bg-danger .card-title {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .card.bg-primary h2,
+    .card.bg-success h2,
+    .card.bg-warning h2,
+    .card.bg-danger h2 {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
     /* Responsive Design */
     @@media (max-width: 768px) {
         .landing-content {
@@ -260,6 +308,16 @@
             grid-template-columns: 1fr;
             gap: 1.5rem;
         }
+
+        /* Dashboard responsive adjustments */
+        .col-md-3 {
+            margin-bottom: 1rem;
+        }
+
+        .col-md-8,
+        .col-md-4 {
+            margin-bottom: 1rem;
+        }
     }
 
     @@media (max-width: 480px) {
@@ -274,63 +332,221 @@
         .brand-logo {
             font-size: 2.5rem;
         }
+
+        /* Dashboard mobile adjustments */
+        .card.bg-primary h2,
+        .card.bg-success h2,
+        .card.bg-warning h2,
+        .card.bg-danger h2 {
+            font-size: 1.5rem;
+        }
+
+        .avatar-circle {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+
+        .d-grid.gap-2 button {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
     }
 </style>
 
 @if (showDashboard)
 {
     <!-- Authenticated User Dashboard -->
-    <ContentPage Title="Dashboard" Subtitle="Welcome back! Here's an overview of your application.">
+    <ContentPage Title="Dashboard" Subtitle="@GetWelcomeMessage()">
+        
+        <!-- User Statistics Cards -->
+        @if (userStats != null)
+        {
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Users</h5>
+                                    <h2 class="mb-0">@userStats.TotalUsers</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-users fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Active Users</h5>
+                                    <h2 class="mb-0">@userStats.ActiveUsers</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Pending</h5>
+                                    <h2 class="mb-0">@userStats.PendingUsers</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Locked</h5>
+                                    <h2 class="mb-0">@userStats.LockedUsers</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-lock fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
         
         <div class="row">
-            <div class="col-12">
+            <!-- Recent Activity Panel -->
+            <div class="col-md-8">
                 <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-tachometer-alt" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
-                        <h4>Welcome to Your Dashboard</h4>
-                        <p class="text-muted">You're successfully logged in. Start exploring your application features.</p>
-                        <button class="btn btn-primary" @onclick="OnGetStartedClick">Explore Features</button>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            Recent Activity
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="RefreshActivity">
+                            <i class="fas fa-refresh"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if (isLoading)
+                        {
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        }
+                        else if (recentActivity?.Any() == true)
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var activity in recentActivity)
+                                {
+                                    <div class="list-group-item border-0 px-0">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="me-3">
+                                                <i class="fas @GetActivityIcon(activity.Action) text-muted me-2"></i>
+                                                <strong>@activity.Action</strong>
+                                                <p class="mb-1 text-muted small">@activity.Details</p>
+                                                <small class="text-muted">@activity.Timestamp.ToString("MMM dd, yyyy 'at' h:mm tt")</small>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(activity.IpAddress))
+                                            {
+                                                <small class="text-muted">@activity.IpAddress</small>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p>No recent activity to display.</p>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="row mt-4">
+            
+            <!-- Quick Actions Panel -->
             <div class="col-md-4">
                 <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-chart-bar text-primary me-2"></i>
-                            Analytics
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt text-warning me-2"></i>
+                            Quick Actions
                         </h5>
-                        <p class="card-text">View your application metrics and performance data.</p>
-                        <a href="/analytics" class="btn btn-outline-primary btn-sm">View Analytics</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @onclick='() => NavigateTo("/users")'>
+                                <i class="fas fa-users me-2"></i>
+                                Manage Users
+                            </button>
+                            <button class="btn btn-outline-success" @onclick='() => NavigateTo("/Account/Manage")'>
+                                <i class="fas fa-user-cog me-2"></i>
+                                Account Settings
+                            </button>
+                            <button class="btn btn-outline-info" @onclick="ViewSystemInfo">
+                                <i class="fas fa-info-circle me-2"></i>
+                                System Information
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick='() => NavigateTo("/logout")'>
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Sign Out
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-users text-success me-2"></i>
-                            Users
-                        </h5>
-                        <p class="card-text">Manage user accounts and permissions.</p>
-                        <a href="/users" class="btn btn-outline-success btn-sm">Manage Users</a>
+                
+                @if (currentUser != null)
+                {
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user text-info me-2"></i>
+                                Your Profile
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle me-3">
+                                    @currentUser.Initials
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">@currentUser.DisplayName</h6>
+                                    <small class="text-muted">@currentUser.Email</small>
+                                </div>
+                            </div>
+                            @if (currentUser.Roles.Any())
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted">Roles:</small><br>
+                                    @foreach (var role in currentUser.Roles)
+                                    {
+                                        <span class="badge bg-secondary me-1">@role</span>
+                                    }
+                                </div>
+                            }
+                            <small class="text-muted">
+                                Status: <span class="badge @GetStatusBadgeClass(currentUser.Status)">@currentUser.Status</span>
+                            </small>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-cog text-warning me-2"></i>
-                            Settings
-                        </h5>
-                        <p class="card-text">Configure your application settings and preferences.</p>
-                        <a href="/settings" class="btn btn-outline-warning btn-sm">Open Settings</a>
-                    </div>
-                </div>
+                }
             </div>
         </div>
 
@@ -418,16 +634,159 @@ else
 
 @code {
     private bool showDashboard = false;
+    private bool isLoading = false;
+    private UserStatsDto? userStats;
+    private List<UserActivityDto> recentActivity = new();
+    private UserDto? currentUser;
+    private string currentUserEmail = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        showDashboard = authState.User?.Identity?.IsAuthenticated ?? false;
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            showDashboard = authState.User?.Identity?.IsAuthenticated ?? false;
+            
+            if (showDashboard && authState.User?.Identity?.Name != null)
+            {
+                currentUserEmail = authState.User.Identity.Name;
+                await LoadDashboardData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing dashboard");
+        }
     }
 
-    private void OnGetStartedClick()
+    private async Task LoadDashboardData()
     {
-        // Handle button click logic here
-        NavigationManager.NavigateTo("/");
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var tasks = new List<Task>
+            {
+                LoadUserStats(),
+                LoadCurrentUser(),
+                LoadRecentActivity()
+            };
+
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading dashboard data");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUserStats()
+    {
+        try
+        {
+            userStats = await UserManagementService.GetUserStatisticsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading user statistics");
+        }
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(currentUserEmail))
+            {
+                currentUser = await UserManagementService.GetUserByEmailAsync(currentUserEmail);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading current user data");
+        }
+    }
+
+    private async Task LoadRecentActivity()
+    {
+        try
+        {
+            if (currentUser != null)
+            {
+                recentActivity = await UserManagementService.GetUserActivityAsync(currentUser.Id, 10);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading recent activity");
+        }
+    }
+
+    private async Task RefreshActivity()
+    {
+        await LoadRecentActivity();
+    }
+
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void ViewSystemInfo()
+    {
+        // TODO: Implement system information modal or navigate to system info page
+        // For now, just navigate to a placeholder
+        NavigationManager.NavigateTo("/system-info");
+    }
+
+    private string GetWelcomeMessage()
+    {
+        var hour = DateTime.Now.Hour;
+        var greeting = hour switch
+        {
+            >= 0 and < 12 => "Good morning",
+            >= 12 and < 17 => "Good afternoon",
+            _ => "Good evening"
+        };
+
+        var userName = currentUser?.DisplayName ?? currentUserEmail.Split('@')[0];
+        return $"{greeting}, {userName}! Here's your dashboard overview.";
+    }
+
+    private string GetActivityIcon(string action)
+    {
+        return action.ToLower() switch
+        {
+            "login" => "fa-sign-in-alt",
+            "logout" => "fa-sign-out-alt",
+            "usercreated" => "fa-user-plus",
+            "userdeleted" => "fa-user-minus",
+            "userupdated" => "fa-user-edit",
+            "userlocked" => "fa-user-lock",
+            "userunlocked" => "fa-user-check",
+            "passwordreset" => "fa-key",
+            "emailconfirmed" => "fa-envelope-open",
+            "emailconfirmationresent" => "fa-envelope",
+            "roleassigned" => "fa-user-tag",
+            "roleremoved" => "fa-user-minus",
+            _ => "fa-info-circle"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "active" => "bg-success",
+            "pending" => "bg-warning",
+            "locked" => "bg-danger",
+            _ => "bg-secondary"
+        };
     }
 }
