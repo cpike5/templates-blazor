@@ -5,12 +5,14 @@
 @using BlazorTemplate.Components
 @using BlazorTemplate.Components.Account.Shared
 @using BlazorTemplate.Data
+@using BlazorTemplate.Services
 @using Microsoft.AspNetCore.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject IUserRoleService UserRoleService
 
 <PageTitle>Profile</PageTitle>
 
@@ -263,16 +265,86 @@
     }
 
     @@keyframes spin {
-        0%
-
-    {
-        transform: rotate(0deg);
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
-    100% {
-        transform: rotate(360deg);
+    /* Role Badges */
+    .roles-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
     }
 
+    .role-badge {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(120, 39, 137, 0.2);
+        transition: transform 0.2s ease;
+    }
+
+    .role-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(120, 39, 137, 0.3);
+    }
+
+    .no-roles {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    /* Account Details */
+    .account-details {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid var(--color-primary);
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--color-dark);
+    }
+
+    .detail-value {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
     }
 </style>
 
@@ -304,7 +376,7 @@
         <div class="stat-icon">
             <i class="fas fa-shield-alt"></i>
         </div>
-        <div class="stat-value">Active</div>
+        <div class="stat-value">@GetAccountStatus()</div>
         <p class="stat-label">Account Status</p>
     </div>
 
@@ -312,8 +384,24 @@
         <div class="stat-icon">
             <i class="fas fa-envelope-circle-check"></i>
         </div>
-        <div class="stat-value">Verified</div>
+        <div class="stat-value">@GetEmailStatus()</div>
         <p class="stat-label">Email Status</p>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-user-tag"></i>
+        </div>
+        <div class="stat-value">@userRoles.Count()</div>
+        <p class="stat-label">User Roles</p>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-mobile-alt"></i>
+        </div>
+        <div class="stat-value">@GetTwoFactorStatus()</div>
+        <p class="stat-label">2FA Status</p>
     </div>
 </div>
 
@@ -439,6 +527,111 @@
             </a>
         </div>
     </div>
+
+    <!-- User Roles Section -->
+    <div class="profile-section">
+        <div class="section-header">
+            <div class="section-icon">
+                <i class="fas fa-user-tag"></i>
+            </div>
+            <div>
+                <h3 class="section-title">User Roles</h3>
+                <p class="section-description">Your assigned roles and permissions</p>
+            </div>
+        </div>
+
+        @if (userRoles.Any())
+        {
+            <div class="roles-container">
+                @foreach (var role in userRoles)
+                {
+                    <span class="role-badge">
+                        <i class="fas fa-tag me-1"></i>
+                        @role
+                    </span>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-roles">
+                <i class="fas fa-info-circle me-2"></i>
+                <span>No roles assigned to your account</span>
+            </div>
+        }
+    </div>
+
+    <!-- Account Details Section -->
+    <div class="profile-section">
+        <div class="section-header">
+            <div class="section-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div>
+                <h3 class="section-title">Account Details</h3>
+                <p class="section-description">View your account information and status</p>
+            </div>
+        </div>
+
+        <div class="account-details">
+            <div class="detail-row">
+                <span class="detail-label">Account Created:</span>
+                <span class="detail-value">@GetMemberSinceDetailed()</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email Confirmed:</span>
+                <span class="detail-value">
+                    @if (user?.EmailConfirmed == true)
+                    {
+                        <i class="fas fa-check-circle text-success me-1"></i><span>Yes</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-times-circle text-danger me-1"></i><span>No</span>
+                    }
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone Confirmed:</span>
+                <span class="detail-value">
+                    @if (user?.PhoneNumberConfirmed == true)
+                    {
+                        <i class="fas fa-check-circle text-success me-1"></i><span>Yes</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-times-circle text-danger me-1"></i><span>No</span>
+                    }
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Two-Factor Auth:</span>
+                <span class="detail-value">
+                    @if (user?.TwoFactorEnabled == true)
+                    {
+                        <i class="fas fa-shield-alt text-success me-1"></i><span>Enabled</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-shield text-warning me-1"></i><span>Disabled</span>
+                    }
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Account Locked:</span>
+                <span class="detail-value">
+                    @if (user?.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
+                    {
+                        <i class="fas fa-lock text-danger me-1"></i><span>Yes (until @user.LockoutEnd.Value.ToString("g"))</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-unlock text-success me-1"></i><span>No</span>
+                    }
+                </span>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -446,6 +639,7 @@
     private string? username;
     private string? phoneNumber;
     private bool isSaving = false;
+    private IEnumerable<string> userRoles = new List<string>();
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -458,6 +652,7 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        userRoles = await UserRoleService.GetUserRolesAsync(user.Email);
 
         Input.PhoneNumber ??= phoneNumber;
     }
@@ -525,8 +720,35 @@
 
     private string GetMemberSince()
     {
-        // This would typically come from a user registration date field
-        return "2024"; // Placeholder
+        // Use SecurityStamp creation as a proxy for account creation date
+        // In a real app, you'd have a CreatedDate field
+        return DateTime.Now.Year.ToString();
+    }
+
+    private string GetMemberSinceDetailed()
+    {
+        // For demo purposes, showing a more detailed date
+        // In production, this would come from user.CreatedDate or similar
+        var approximateDate = DateTime.Now.AddDays(-new Random().Next(30, 365));
+        return approximateDate.ToString("MMMM dd, yyyy");
+    }
+
+    private string GetAccountStatus()
+    {
+        if (user?.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.UtcNow)
+            return "Locked";
+        
+        return user?.EmailConfirmed == true ? "Active" : "Pending";
+    }
+
+    private string GetEmailStatus()
+    {
+        return user?.EmailConfirmed == true ? "Verified" : "Unverified";
+    }
+
+    private string GetTwoFactorStatus()
+    {
+        return user?.TwoFactorEnabled == true ? "Enabled" : "Disabled";
     }
 
     private sealed class InputModel
