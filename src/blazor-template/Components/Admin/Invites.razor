@@ -1,0 +1,315 @@
+@page "/Admin/Invites"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using BlazorTemplate.Data
+@using BlazorTemplate.Services
+@using BlazorTemplate.Configuration
+@using Microsoft.Extensions.Options
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Authorization
+
+@attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
+
+@inject IInviteService InviteService
+@inject UserManager<ApplicationUser> UserManager
+@inject IOptions<ConfigurationOptions> ConfigOptions
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Invite Management</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-envelope-open-text me-2"></i>Invite Management</h2>
+            </div>
+        </div>
+    </div>
+
+    @if (!IsInviteOnlyEnabled)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Invite-only registration is currently disabled. Enable it in configuration to use this feature.
+        </div>
+    }
+    else
+    {
+        <!-- Generate Invite Codes Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Generate Invite Codes</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <EditForm Model="InviteCodeForm" OnValidSubmit="GenerateInviteCode">
+                            <DataAnnotationsValidator />
+                            
+                            <div class="mb-3">
+                                <label for="codeCount" class="form-label">Number of Codes</label>
+                                <InputNumber @bind-Value="InviteCodeForm.Count" class="form-control" id="codeCount" min="1" max="10" />
+                                <ValidationMessage For="() => InviteCodeForm.Count" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="expirationHours" class="form-label">Expiration Hours</label>
+                                <InputNumber @bind-Value="InviteCodeForm.ExpirationHours" class="form-control" id="expirationHours" min="1" max="168" />
+                                <ValidationMessage For="() => InviteCodeForm.ExpirationHours" />
+                                <div class="form-text">Default: @DefaultExpirationHours hours</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes (Optional)</label>
+                                <InputTextArea @bind-Value="InviteCodeForm.Notes" class="form-control" id="notes" rows="3" />
+                                <ValidationMessage For="() => InviteCodeForm.Notes" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" disabled="@isGenerating">
+                                @if (isGenerating)
+                                {
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    <span>Generating...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-plus me-2"></i>
+                                    <span>Generate Codes</span>
+                                }
+                            </button>
+                        </EditForm>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Current Limits</h6>
+                                <p class="mb-1"><strong>Active codes for you:</strong> @activeCodeCount/@maxActiveCodesPerAdmin</p>
+                                <p class="mb-0"><strong>Can generate:</strong> @Math.Max(0, maxActiveCodesPerAdmin - activeCodeCount) more codes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Codes Alert -->
+        @if (generatedCodes.Any())
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <h6><i class="fas fa-check-circle me-2"></i>Generated Codes</h6>
+                <p class="mb-2">Copy these codes before closing - they won't be shown again:</p>
+                <div class="row">
+                    @foreach (var inviteCode in generatedCodes)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-2">
+                            <div class="input-group">
+                                <input type="text" class="form-control font-monospace" value="@inviteCode" readonly />
+                                <button class="btn btn-outline-secondary" type="button" @onclick="() => CopyToClipboard(inviteCode)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button type="button" class="btn-close" @onclick="ClearGeneratedCodes"></button>
+            </div>
+        }
+
+        <!-- Active Invite Codes Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Active Invite Codes</h5>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="LoadActiveCodes">
+                    <i class="fas fa-refresh me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                @if (activeCodes == null)
+                {
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                }
+                else if (!activeCodes.Any())
+                {
+                    <div class="text-center text-muted">
+                        <i class="fas fa-inbox me-2"></i>No active invite codes found.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var inviteCode in activeCodes)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge badge-light font-monospace text-primary">@inviteCode.Code</span>
+                                        </td>
+                                        <td>@inviteCode.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                        <td>
+                                            <span class="@(inviteCode.ExpiresAt < DateTime.UtcNow.AddHours(24) ? "text-warning" : "")">
+                                                @inviteCode.ExpiresAt.ToString("MMM dd, yyyy HH:mm")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (inviteCode.IsUsed)
+                                            {
+                                                <span class="badge bg-secondary">Used</span>
+                                            }
+                                            else if (inviteCode.IsExpired)
+                                            {
+                                                <span class="badge bg-danger">Expired</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                        </td>
+                                        <td class="text-truncate" style="max-width: 200px;" title="@inviteCode.Notes">
+                                            @inviteCode.Notes
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => CopyToClipboard(inviteCode.Code)">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Email Invites Section (Placeholder) -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Email Invitations</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Email invitation functionality will be available in a future update when email server configuration is completed.
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<InviteCode> activeCodes = null!;
+    private List<string> generatedCodes = new();
+    private bool isGenerating = false;
+    private int activeCodeCount = 0;
+    private string? currentUserId;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var user = await UserManager.GetUserAsync(authState.User);
+            currentUserId = user?.Id;
+            
+            if (currentUserId != null)
+            {
+                await LoadActiveCodes();
+            }
+        }
+    }
+
+    private bool IsInviteOnlyEnabled => ConfigOptions.Value.Setup.InviteOnly.EnableInviteOnly;
+    private int DefaultExpirationHours => ConfigOptions.Value.Setup.InviteOnly.DefaultCodeExpirationHours;
+    private int maxActiveCodesPerAdmin => ConfigOptions.Value.Setup.InviteOnly.MaxActiveCodesPerAdmin;
+
+    private InviteCodeFormModel InviteCodeForm { get; set; } = new();
+
+    private async Task GenerateInviteCode()
+    {
+        if (currentUserId == null || isGenerating) return;
+
+        isGenerating = true;
+        generatedCodes.Clear();
+
+        try
+        {
+            var canCreate = await InviteService.CanCreateMoreCodesAsync(currentUserId);
+            if (!canCreate)
+            {
+                // Show error - could use a toast notification service here
+                return;
+            }
+
+            for (int i = 0; i < InviteCodeForm.Count; i++)
+            {
+                var inviteCode = await InviteService.GenerateInviteCodeAsync(
+                    currentUserId, 
+                    InviteCodeForm.Notes, 
+                    InviteCodeForm.ExpirationHours);
+                
+                generatedCodes.Add(inviteCode.Code);
+            }
+
+            // Reset form
+            InviteCodeForm = new InviteCodeFormModel();
+            
+            // Refresh active codes
+            await LoadActiveCodes();
+            
+            StateHasChanged();
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private async Task LoadActiveCodes()
+    {
+        if (currentUserId == null) return;
+
+        activeCodes = (await InviteService.GetActiveInviteCodesAsync(currentUserId)).ToList();
+        activeCodeCount = activeCodes.Count;
+        StateHasChanged();
+    }
+
+    private void ClearGeneratedCodes()
+    {
+        generatedCodes.Clear();
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        // Could show a toast notification here
+    }
+
+    private class InviteCodeFormModel
+    {
+        [Range(1, 10, ErrorMessage = "You can generate between 1 and 10 codes at once.")]
+        public int Count { get; set; } = 1;
+
+        [Range(1, 168, ErrorMessage = "Expiration must be between 1 and 168 hours (7 days).")]
+        public int ExpirationHours { get; set; } = 24;
+
+        [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
+        public string? Notes { get; set; }
+    }
+}

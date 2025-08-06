@@ -23,6 +23,7 @@
         public bool EnableSetupMode { get; set; } = false;
         public bool EnableGuestUser { get; set; } = false;
         public GuestUserAccount GuestUser { get; set; } = new GuestUserAccount();
+        public InviteOnlyOptions InviteOnly { get; set; } = new InviteOnlyOptions();
     }
     public class GuestUserAccount
     {
@@ -78,5 +79,15 @@
             rng.GetBytes(bytes);
             return (int)(BitConverter.ToUInt32(bytes, 0) % maxValue);
         }
+    }
+
+    public class InviteOnlyOptions
+    {
+        public bool EnableInviteOnly { get; set; } = false;
+        public bool EnableEmailInvites { get; set; } = false;
+        public bool EnableInviteCodes { get; set; } = true;
+        public int DefaultCodeExpirationHours { get; set; } = 24;
+        public int DefaultEmailInviteExpirationHours { get; set; } = 72;
+        public int MaxActiveCodesPerAdmin { get; set; } = 50;
     }
 }

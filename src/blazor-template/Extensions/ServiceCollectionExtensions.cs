@@ -25,6 +25,8 @@ namespace BlazorTemplate.Extensions
             services.AddScoped<IUserManagementService, UserManagementService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
             services.AddScoped<IAdminRoleService, AdminRoleService>();
+            services.AddScoped<IInviteService, InviteService>();
+            services.AddScoped<IEmailInviteService, EmailInviteService>();
             return services;
         }
     }

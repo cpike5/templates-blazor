@@ -9,6 +9,7 @@
 @using BlazorTemplate.Data
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Options
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -17,6 +18,8 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject BlazorTemplate.Services.IInviteService InviteService
+@inject IOptions<BlazorTemplate.Configuration.ConfigurationOptions> ConfigOptions
 
 @layout BlazorTemplate.Components.Account.Shared.AccountLayout
 
@@ -308,6 +311,21 @@
                     <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register" @onkeyup="@OnFormKeyUp">
                         <DataAnnotationsValidator />
 
+                        @if (IsInviteOnlyEnabled)
+                        {
+                            <div class="form-floating">
+                                <InputText @bind-Value="Input.InviteCode" class="form-control" id="inviteCode" autocomplete="off" aria-required="true" placeholder="Enter invite code" />
+                                <label for="inviteCode">Invite Code</label>
+                                <ValidationMessage For="() => Input.InviteCode" class="validation-message" />
+                                @if (!string.IsNullOrEmpty(inviteCodeMessage))
+                                {
+                                    <div class="@(inviteCodeValidationState == ValidationState.Valid ? "valid-feedback" : "validation-message")">
+                                        @inviteCodeMessage
+                                    </div>
+                                }
+                            </div>
+                        }
+
                         <div class="form-floating">
                             <InputText @bind-Value="Input.Email" class="form-control" id="email" autocomplete="username" aria-required="true" placeholder="name@example.com" @onblur="@OnEmailBlur" />
                             <label for="email">Email Address</label>
@@ -378,6 +396,9 @@
     private PasswordStrength passwordStrength = PasswordStrength.None;
     private ValidationState emailValidationState = ValidationState.None;
     private ValidationState confirmPasswordValidationState = ValidationState.None;
+    private ValidationState inviteCodeValidationState = ValidationState.None;
+    private string inviteCodeMessage = string.Empty;
+    private InviteCode? validatedInviteCode;
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -385,7 +406,12 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery]
+    private string? InviteToken { get; set; }
+
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    private bool IsInviteOnlyEnabled => ConfigOptions.Value.Setup.InviteOnly.EnableInviteOnly;
 
     public async Task RegisterUser(EditContext editContext)
     {
@@ -394,6 +420,37 @@
 
         try
         {
+            // Validate invite code if invite-only mode is enabled
+            if (IsInviteOnlyEnabled)
+            {
+                if (string.IsNullOrWhiteSpace(Input.InviteCode) && string.IsNullOrWhiteSpace(InviteToken))
+                {
+                    identityErrors = new[] { new IdentityError { Description = "An invite code is required to register." } };
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(Input.InviteCode))
+                {
+                    validatedInviteCode = await InviteService.ValidateInviteCodeAsync(Input.InviteCode);
+                    if (validatedInviteCode == null)
+                    {
+                        identityErrors = new[] { new IdentityError { Description = "Invalid or expired invite code." } };
+                        return;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(InviteToken))
+                {
+                    var emailInvite = await InviteService.ValidateEmailInviteAsync(InviteToken);
+                    if (emailInvite == null)
+                    {
+                        identityErrors = new[] { new IdentityError { Description = "Invalid or expired invite link." } };
+                        return;
+                    }
+                    
+                    // Pre-fill email from invite
+                    Input.Email = emailInvite.Email;
+                }
+            }
             var user = CreateUser();
 
             await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -410,6 +467,19 @@
             Logger.LogInformation("User created a new account with password.");
 
             var userId = await UserManager.GetUserIdAsync(user);
+
+            // Mark invite as used if applicable
+            if (IsInviteOnlyEnabled)
+            {
+                if (validatedInviteCode != null)
+                {
+                    await InviteService.UseInviteCodeAsync(validatedInviteCode.Code, userId);
+                }
+                else if (!string.IsNullOrWhiteSpace(InviteToken))
+                {
+                    await InviteService.UseEmailInviteAsync(InviteToken, userId);
+                }
+            }
             var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             var callbackUrl = NavigationManager.GetUriWithQueryParameters(
@@ -569,5 +639,8 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        [Display(Name = "Invite Code")]
+        public string InviteCode { get; set; } = "";
     }
 }
