@@ -213,8 +213,8 @@ namespace BlazorTemplate.Services
             var bytes = new byte[48]; // 48 bytes = 64 base64url characters
             rng.GetBytes(bytes);
             return Convert.ToBase64String(bytes)
-                .Replace('+', '-')
-                .Replace('/', '_')
+                .Replace("+", "-")
+                .Replace("/", "_")
                 .TrimEnd('=');
         }
     }
