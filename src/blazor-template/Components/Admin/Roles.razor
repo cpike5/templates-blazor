@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
 
 <style>
     .admin-header {
@@ -533,8 +534,8 @@
             All Roles
         </h3>
         <div class="search-filter-bar">
-            <input type="text" class="search-input" placeholder="Search roles..." @value="searchTerm" @onchange="OnSearchChanged" />
-            <select class="filter-dropdown" @value="filterType" @onchange="OnFilterChanged">
+            <input type="text" class="search-input" placeholder="Search roles..." value="@searchTerm" @onchange="OnSearchChanged" />
+            <select class="filter-dropdown" value="@filterType" @onchange="OnFilterChanged">
                 <option value="">All Types</option>
                 <option value="system">System Roles</option>
                 <option value="custom">Custom Roles</option>

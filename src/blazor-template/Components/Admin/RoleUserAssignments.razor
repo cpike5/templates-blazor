@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
 @inject IAdminRoleService AdminRoleService
 @inject IUserRoleService UserRoleService
 @inject IJSRuntime JSRuntime

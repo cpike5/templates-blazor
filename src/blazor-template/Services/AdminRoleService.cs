@@ -9,29 +9,24 @@ namespace BlazorTemplate.Services
     {
         private readonly ILogger<AdminRoleService> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _userManager;
 
         private static readonly string[] SystemRoles = { "Administrator", "User" };
 
         public AdminRoleService(
             ILogger<AdminRoleService> logger,
-            IServiceProvider serviceProvider,
-            RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager)
+            IServiceProvider serviceProvider)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
-            _roleManager = roleManager;
-            _userManager = userManager;
         }
 
         public async Task<List<RoleDto>> GetRolesAsync()
         {
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            var roles = await _roleManager.Roles.OrderBy(r => r.Name).ToListAsync();
+            var roles = await roleManager.Roles.OrderBy(r => r.Name).ToListAsync();
             var roleDtos = new List<RoleDto>();
 
             foreach (var role in roles)
@@ -54,7 +49,10 @@ namespace BlazorTemplate.Services
 
         public async Task<RoleDetailDto> GetRoleByIdAsync(string roleId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
+            using var scope = _serviceProvider.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            
+            var role = await roleManager.FindByIdAsync(roleId);
             if (role == null)
                 throw new ArgumentException("Role not found");
 
@@ -108,12 +106,15 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            if (await _roleManager.RoleExistsAsync(request.Name))
+            using var scope = _serviceProvider.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            
+            if (await roleManager.RoleExistsAsync(request.Name))
             {
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "DuplicateRoleName",
-                    Description = $"Role '{request.Name}' already exists."
+                    Description = $"Role \"{request.Name}\" already exists."
                 });
             }
 
@@ -123,12 +124,12 @@ namespace BlazorTemplate.Services
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "SystemRoleConflict",
-                    Description = $"Cannot create role '{request.Name}' as it conflicts with a system role."
+                    Description = $"Cannot create role \"{request.Name}\" as it conflicts with a system role."
                 });
             }
 
             var role = new IdentityRole(request.Name);
-            var result = await _roleManager.CreateAsync(role);
+            var result = await roleManager.CreateAsync(role);
 
             if (result.Succeeded)
             {
@@ -176,7 +177,10 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            var role = await _roleManager.FindByIdAsync(roleId);
+            using var scope = _serviceProvider.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var role = await roleManager.FindByIdAsync(roleId);
             if (role == null)
             {
                 return IdentityResult.Failed(new IdentityError
@@ -198,12 +202,12 @@ namespace BlazorTemplate.Services
             // Update role name if changed
             if (role.Name != request.Name)
             {
-                if (await _roleManager.RoleExistsAsync(request.Name))
+                if (await roleManager.RoleExistsAsync(request.Name))
                 {
                     return IdentityResult.Failed(new IdentityError
                     {
                         Code = "DuplicateRoleName",
-                        Description = $"Role '{request.Name}' already exists."
+                        Description = $"Role \"{request.Name}\" already exists."
                     });
                 }
 
@@ -213,7 +217,7 @@ namespace BlazorTemplate.Services
                     return IdentityResult.Failed(new IdentityError
                     {
                         Code = "SystemRoleConflict",
-                        Description = $"Cannot rename role to '{request.Name}' as it conflicts with a system role."
+                        Description = $"Cannot rename role to \"{request.Name}\" as it conflicts with a system role."
                     });
                 }
 
@@ -224,7 +228,7 @@ namespace BlazorTemplate.Services
                 _logger.LogInformation("Role {RoleId} renamed from {OldName} to {NewName}", roleId, oldName, request.Name);
             }
 
-            var result = await _roleManager.UpdateAsync(role);
+            var result = await roleManager.UpdateAsync(role);
 
             if (result.Succeeded)
             {
@@ -242,7 +246,11 @@ namespace BlazorTemplate.Services
 
         public async Task<IdentityResult> DeleteRoleAsync(string roleId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
+            using var scope = _serviceProvider.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var role = await roleManager.FindByIdAsync(roleId);
             if (role == null)
             {
                 return IdentityResult.Failed(new IdentityError
@@ -261,17 +269,17 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
+            var usersInRole = await userManager.GetUsersInRoleAsync(role.Name!);
             if (usersInRole.Any())
             {
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "RoleInUse",
-                    Description = $"Cannot delete role '{role.Name}' because it is assigned to {usersInRole.Count} user(s)."
+                    Description = $"Cannot delete role \"{role.Name}\" because it is assigned to {usersInRole.Count} user(s)."
                 });
             }
 
-            var result = await _roleManager.DeleteAsync(role);
+            var result = await roleManager.DeleteAsync(role);
 
             if (result.Succeeded)
             {
@@ -283,7 +291,11 @@ namespace BlazorTemplate.Services
 
         public async Task<IdentityResult> AssignRoleToUserAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            using var scope = _serviceProvider.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return IdentityResult.Failed(new IdentityError
@@ -293,7 +305,7 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            if (!await _roleManager.RoleExistsAsync(roleName))
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
                 return IdentityResult.Failed(new IdentityError
                 {
@@ -302,16 +314,16 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            if (await _userManager.IsInRoleAsync(user, roleName))
+            if (await userManager.IsInRoleAsync(user, roleName))
             {
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "UserAlreadyInRole",
-                    Description = $"User is already assigned to role '{roleName}'."
+                    Description = $"User is already assigned to role \"{roleName}\"."
                 });
             }
 
-            var result = await _userManager.AddToRoleAsync(user, roleName);
+            var result = await userManager.AddToRoleAsync(user, roleName);
 
             if (result.Succeeded)
             {
@@ -323,7 +335,10 @@ namespace BlazorTemplate.Services
 
         public async Task<IdentityResult> RemoveRoleFromUserAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            using var scope = _serviceProvider.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return IdentityResult.Failed(new IdentityError
@@ -333,16 +348,16 @@ namespace BlazorTemplate.Services
                 });
             }
 
-            if (!await _userManager.IsInRoleAsync(user, roleName))
+            if (!await userManager.IsInRoleAsync(user, roleName))
             {
                 return IdentityResult.Failed(new IdentityError
                 {
                     Code = "UserNotInRole",
-                    Description = $"User is not assigned to role '{roleName}'."
+                    Description = $"User is not assigned to role \"{roleName}\"."
                 });
             }
 
-            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+            var result = await userManager.RemoveFromRoleAsync(user, roleName);
 
             if (result.Succeeded)
             {
@@ -354,22 +369,28 @@ namespace BlazorTemplate.Services
 
         public async Task<List<string>> GetUserRolesAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            using var scope = _serviceProvider.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null)
                 return new List<string>();
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await userManager.GetRolesAsync(user);
             return roles.ToList();
         }
 
         public async Task<List<UserDto>> GetUsersInRoleAsync(string roleName)
         {
-            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            using var scope = _serviceProvider.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var users = await userManager.GetUsersInRoleAsync(roleName);
             var userDtos = new List<UserDto>();
 
             foreach (var user in users)
             {
-                var userRoles = await _userManager.GetRolesAsync(user);
+                var userRoles = await userManager.GetRolesAsync(user);
                 userDtos.Add(new UserDto
                 {
                     Id = user.Id,
@@ -393,8 +414,9 @@ namespace BlazorTemplate.Services
         {
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            var totalRoles = await _roleManager.Roles.CountAsync();
+            var totalRoles = await roleManager.Roles.CountAsync();
             var systemRolesCount = SystemRoles.Length;
             var customRolesCount = totalRoles - systemRolesCount;
 
@@ -415,6 +437,217 @@ namespace BlazorTemplate.Services
         public async Task<bool> IsSystemRoleAsync(string roleName)
         {
             return await Task.FromResult(SystemRoles.Contains(roleName, StringComparer.OrdinalIgnoreCase));
+        }
+
+        public async Task<IdentityResult> UpdateRolePermissionsAsync(string roleId, List<string> permissions, string? modifiedBy = null)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var role = await roleManager.FindByIdAsync(roleId);
+            if (role == null)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "RoleNotFound",
+                    Description = "Role not found."
+                });
+            }
+
+            if (await IsSystemRoleAsync(role.Name!))
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "SystemRoleProtected",
+                    Description = "System role permissions cannot be modified."
+                });
+            }
+
+            try
+            {
+                // Remove existing permissions for this role
+                var existingPermissions = await db.RolePermissions
+                    .Where(rp => rp.RoleId == roleId)
+                    .ToListAsync();
+
+                db.RolePermissions.RemoveRange(existingPermissions);
+
+                // Add new permissions
+                var rolePermissions = permissions.Select(permission => new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionName = permission,
+                    IsGranted = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = modifiedBy
+                }).ToList();
+
+                await db.RolePermissions.AddRangeAsync(rolePermissions);
+                await db.SaveChangesAsync();
+
+                _logger.LogInformation("Updated permissions for role {RoleId}: {Permissions}", 
+                    roleId, string.Join(", ", permissions));
+
+                return IdentityResult.Success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating permissions for role {RoleId}", roleId);
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "DatabaseError",
+                    Description = "An error occurred while updating role permissions."
+                });
+            }
+        }
+
+        public async Task<List<string>> GetRolePermissionsByIdAsync(string roleId)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var permissions = await db.RolePermissions
+                .Where(rp => rp.RoleId == roleId && rp.IsGranted)
+                .Select(rp => rp.PermissionName)
+                .ToListAsync();
+
+            return permissions;
+        }
+
+        public async Task<IdentityResult> AddPermissionToRoleAsync(string roleId, string permission, string? createdBy = null)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var role = await roleManager.FindByIdAsync(roleId);
+            if (role == null)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "RoleNotFound", 
+                    Description = "Role not found."
+                });
+            }
+
+            if (await IsSystemRoleAsync(role.Name!))
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "SystemRoleProtected",
+                    Description = "Cannot modify system role permissions."
+                });
+            }
+
+            // Check if permission already exists
+            var existingPermission = await db.RolePermissions
+                .FirstOrDefaultAsync(rp => rp.RoleId == roleId && rp.PermissionName == permission);
+
+            if (existingPermission != null)
+            {
+                if (existingPermission.IsGranted)
+                {
+                    return IdentityResult.Failed(new IdentityError
+                    {
+                        Code = "PermissionAlreadyExists",
+                        Description = "Permission already granted to this role."
+                    });
+                }
+                else
+                {
+                    // Update existing denied permission to granted
+                    existingPermission.IsGranted = true;
+                    existingPermission.CreatedAt = DateTime.UtcNow;
+                    existingPermission.CreatedBy = createdBy;
+                }
+            }
+            else
+            {
+                // Add new permission
+                var rolePermission = new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionName = permission,
+                    IsGranted = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = createdBy
+                };
+
+                await db.RolePermissions.AddAsync(rolePermission);
+            }
+
+            try
+            {
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Added permission {Permission} to role {RoleId}", permission, roleId);
+                return IdentityResult.Success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding permission {Permission} to role {RoleId}", permission, roleId);
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "DatabaseError",
+                    Description = "An error occurred while adding the permission."
+                });
+            }
+        }
+
+        public async Task<IdentityResult> RemovePermissionFromRoleAsync(string roleId, string permission)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var role = await roleManager.FindByIdAsync(roleId);
+            if (role == null)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "RoleNotFound",
+                    Description = "Role not found."
+                });
+            }
+
+            if (await IsSystemRoleAsync(role.Name!))
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "SystemRoleProtected",
+                    Description = "Cannot modify system role permissions."
+                });
+            }
+
+            var rolePermission = await db.RolePermissions
+                .FirstOrDefaultAsync(rp => rp.RoleId == roleId && rp.PermissionName == permission && rp.IsGranted);
+
+            if (rolePermission == null)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "PermissionNotFound",
+                    Description = "Permission not found for this role."
+                });
+            }
+
+            try
+            {
+                db.RolePermissions.Remove(rolePermission);
+                await db.SaveChangesAsync();
+                
+                _logger.LogInformation("Removed permission {Permission} from role {RoleId}", permission, roleId);
+                return IdentityResult.Success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing permission {Permission} from role {RoleId}", permission, roleId);
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "DatabaseError",
+                    Description = "An error occurred while removing the permission."
+                });
+            }
         }
 
         public async Task<List<PermissionDto>> GetAvailablePermissionsAsync()
@@ -450,22 +683,42 @@ namespace BlazorTemplate.Services
         // Private helper methods
         private async Task<int> GetRoleUserCountAsync(string roleName)
         {
-            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            using var scope = _serviceProvider.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var users = await userManager.GetUsersInRoleAsync(roleName);
             return users.Count;
         }
 
         private async Task<List<string>> GetRolePermissionsAsync(string roleName)
         {
-            // This would typically come from a database table that stores role-permission mappings
-            // For now, return predefined permissions based on role type
-            return await Task.FromResult(roleName.ToLowerInvariant() switch
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role == null) return new List<string>();
+
+            // Get permissions from database
+            var permissions = await db.RolePermissions
+                .Where(rp => rp.RoleId == role.Id && rp.IsGranted)
+                .Select(rp => rp.PermissionName)
+                .ToListAsync();
+
+            // If no permissions in database, use default system permissions
+            if (!permissions.Any())
             {
-                "administrator" => new List<string> { "All Permissions" },
-                "user" => new List<string> { "content.view", "users.view" },
-                "manager" => new List<string> { "content.view", "content.edit", "users.view", "users.edit" },
-                "viewer" => new List<string> { "content.view" },
-                _ => new List<string>()
-            });
+                permissions = roleName.ToLowerInvariant() switch
+                {
+                    "administrator" => new List<string> { "All Permissions" },
+                    "user" => new List<string> { "content.view", "users.view" },
+                    "manager" => new List<string> { "content.view", "content.edit", "users.view", "users.edit" },
+                    "viewer" => new List<string> { "content.view" },
+                    _ => new List<string>()
+                };
+            }
+
+            return permissions;
         }
 
         private static string GetRoleDescription(string roleName)

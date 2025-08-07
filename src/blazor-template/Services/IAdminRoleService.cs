@@ -23,5 +23,11 @@ namespace BlazorTemplate.Services
         Task<RoleStatsDto> GetRoleStatisticsAsync();
         Task<bool> IsSystemRoleAsync(string roleName);
         Task<List<PermissionDto>> GetAvailablePermissionsAsync();
+
+        // Permission management
+        Task<IdentityResult> UpdateRolePermissionsAsync(string roleId, List<string> permissions, string? modifiedBy = null);
+        Task<List<string>> GetRolePermissionsByIdAsync(string roleId);
+        Task<IdentityResult> AddPermissionToRoleAsync(string roleId, string permission, string? createdBy = null);
+        Task<IdentityResult> RemovePermissionFromRoleAsync(string roleId, string permission);
     }
 }

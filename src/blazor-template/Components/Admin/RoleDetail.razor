@@ -1,0 +1,843 @@
+@page "/admin/roles/{roleId}"
+@using BlazorTemplate.Components.Layout
+@using BlazorTemplate.Data
+@using BlazorTemplate.Models
+@using BlazorTemplate.Services
+@using Microsoft.AspNetCore.Authorization
+@layout AdminLayout
+@attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
+@inject IAdminRoleService AdminRoleService
+@inject ILogger<RoleDetail> Logger
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<style>
+    .role-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .role-header {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .role-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .role-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 4px 12px rgba(120, 39, 137, 0.3);
+    }
+
+    .role-details h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-dark);
+    }
+
+    .role-details p {
+        margin: 0.5rem 0 0 0;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .role-metadata {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .metadata-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .metadata-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+
+    .metadata-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--color-dark);
+    }
+
+    .role-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .main-content, .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .panel {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .panel-header {
+        background: #f8f9fa;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .panel-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .panel-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+    }
+
+    .panel-body {
+        padding: 1.5rem;
+    }
+
+    .permission-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .permission-category {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .permission-category-header {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--color-dark);
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .permission-list {
+        padding: 0.5rem 0;
+    }
+
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .permission-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-success);
+    }
+
+    .user-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .user-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .user-item:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px rgba(120, 39, 137, 0.1);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-info h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--color-dark);
+        font-size: 0.875rem;
+    }
+
+    .user-info small {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .back-nav {
+        margin-bottom: 2rem;
+    }
+
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: '/';
+        color: #6c757d;
+        margin: 0 0.5rem;
+    }
+
+    .system-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: #fff3cd;
+        color: #856404;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Responsive styles can be added later */
+</style>
+
+<div class="role-detail-container">
+    <!-- Navigation breadcrumb -->
+    <nav class="back-nav" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/admin" class="text-decoration-none">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/roles" class="text-decoration-none">Roles</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                @if (roleDetail != null)
+                {
+                    @roleDetail.Name
+                }
+                else
+                {
+                    <span>Loading...</span>
+                }
+            </li>
+        </ol>
+    </nav>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading role details...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading role information...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @errorMessage
+            <button class="btn btn-outline-danger btn-sm ms-auto" @onclick="LoadRoleDetailsAsync">
+                <i class="fas fa-refresh"></i> Retry
+            </button>
+        </div>
+    }
+    else if (roleDetail != null)
+    {
+        <!-- Role Header -->
+        <div class="role-header">
+            <div class="role-info">
+                <div class="role-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="role-details">
+                    <h1>
+                        @roleDetail.Name
+                        @if (roleDetail.IsSystemRole)
+                        {
+                            <span class="system-role-badge ms-2">
+                                <i class="fas fa-lock"></i> System Role
+                            </span>
+                        }
+                    </h1>
+                    <p>@(roleDetail.Description ?? "No description available")</p>
+                </div>
+            </div>
+
+            <div class="role-metadata">
+                <div class="metadata-item">
+                    <span class="metadata-label">User Count</span>
+                    <span class="metadata-value">@roleDetail.UserCount users</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Permissions</span>
+                    <span class="metadata-value">@roleDetail.Permissions.Count permissions</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Created</span>
+                    <span class="metadata-value">@roleDetail.CreatedAt.ToString("MMM dd, yyyy")</span>
+                </div>
+                @if (roleDetail.LastModified.HasValue)
+                {
+                    <div class="metadata-item">
+                        <span class="metadata-label">Last Modified</span>
+                        <span class="metadata-value">@roleDetail.LastModified.Value.ToString("MMM dd, yyyy")</span>
+                    </div>
+                }
+            </div>
+
+            <div class="role-actions">
+                @if (!roleDetail.IsSystemRole)
+                {
+                    <button class="btn btn-primary" @onclick="() => EditRole()">
+                        <i class="fas fa-edit"></i> Edit Role
+                    </button>
+                }
+                <button class="btn btn-outline-primary" @onclick="() => ManageUsers()">
+                    <i class="fas fa-users"></i> Manage Users
+                </button>
+                <button class="btn btn-outline-secondary" @onclick="() => ShowPermissions = !ShowPermissions">
+                    <i class="fas fa-@(ShowPermissions ? "eye-slash" : "eye")"></i>
+                    @(ShowPermissions ? "Hide" : "Show") Permissions
+                </button>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Statistics -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">
+                            <div class="panel-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            Role Statistics
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <div class="stat-value">@roleDetail.AssignedUsers.Count</div>
+                                <div class="stat-label">Assigned Users</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@roleDetail.Permissions.Count</div>
+                                <div class="stat-label">Permissions</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@(roleDetail.AssignedUsers.Count(u => u.Status == "Active"))</div>
+                                <div class="stat-label">Active Users</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permissions Panel -->
+                @if (ShowPermissions)
+                {
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">
+                                <div class="panel-icon">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                Permissions (@roleDetail.Permissions.Count)
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            @if (roleDetail.Permissions.Any())
+                            {
+                                @if (roleDetail.Permissions.Contains("All Permissions"))
+                                {
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-crown me-2"></i>
+                                        This role has <strong>all permissions</strong> in the system.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="permission-grid">
+                                        @foreach (var categoryGroup in GetPermissionsByCategory())
+                                        {
+                                            <div class="permission-category">
+                                                <div class="permission-category-header">
+                                                    @categoryGroup.Key
+                                                </div>
+                                                <div class="permission-list">
+                                                    @foreach (var permission in categoryGroup.Value)
+                                                    {
+                                                        <div class="permission-item">
+                                                            <div class="permission-icon">
+                                                                <i class="fas fa-check"></i>
+                                                            </div>
+                                                            <span>@GetPermissionDisplayName(permission)</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-key fa-2x mb-2"></i>
+                                    <p>No permissions assigned to this role</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Assigned Users Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">
+                            <div class="panel-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            Assigned Users (@roleDetail.AssignedUsers.Count)
+                        </h3>
+                        @if (!roleDetail.IsSystemRole)
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ManageUsers()">
+                                <i class="fas fa-user-plus"></i> Assign Users
+                            </button>
+                        }
+                    </div>
+                    <div class="panel-body">
+                        @if (roleDetail.AssignedUsers.Any())
+                        {
+                            <div class="user-list">
+                                @foreach (var user in roleDetail.AssignedUsers.Take(10))
+                                {
+                                    <div class="user-item">
+                                        <div class="user-avatar">@user.Initials</div>
+                                        <div class="user-info">
+                                            <h6>@user.DisplayName</h6>
+                                            <small>@user.Email • Status: @user.Status</small>
+                                        </div>
+                                        <div class="user-actions">
+                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ViewUser(user.Id)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            @if (!roleDetail.IsSystemRole)
+                                            {
+                                                <button class="btn btn-outline-danger btn-sm" @onclick="() => RemoveUser(user.Id)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (roleDetail.AssignedUsers.Count > 10)
+                            {
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-secondary" @onclick="() => ManageUsers()">
+                                        View All @roleDetail.AssignedUsers.Count Users
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p>No users assigned to this role</p>
+                                @if (!roleDetail.IsSystemRole)
+                                {
+                                    <button class="btn btn-primary" @onclick="() => ManageUsers()">
+                                        <i class="fas fa-user-plus"></i> Assign Users
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar-content">
+                <!-- Quick Actions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">
+                            <div class="panel-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="d-grid gap-2">
+                            @if (!roleDetail.IsSystemRole)
+                            {
+                                <button class="btn btn-outline-primary" @onclick="() => EditRole()">
+                                    <i class="fas fa-edit"></i> Edit Role
+                                </button>
+                                <button class="btn btn-outline-secondary" @onclick="() => CloneRole()">
+                                    <i class="fas fa-copy"></i> Clone Role
+                                </button>
+                            }
+                            <button class="btn btn-outline-success" @onclick="() => ManageUsers()">
+                                <i class="fas fa-users"></i> Manage Users
+                            </button>
+                            <button class="btn btn-outline-info" @onclick="() => ExportRole()">
+                                <i class="fas fa-download"></i> Export Details
+                            </button>
+                            @if (!roleDetail.IsSystemRole && roleDetail.UserCount == 0)
+                            {
+                                <hr class="my-3">
+                                <button class="btn btn-outline-danger" @onclick="() => DeleteRole()" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteRoleModal">
+                                    <i class="fas fa-trash"></i> Delete Role
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Information -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">
+                            <div class="panel-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            Information
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted">Role ID</small>
+                                <div class="font-monospace small">@roleDetail.Id</div>
+                            </div>
+                            <div>
+                                <small class="text-muted">Created By</small>
+                                <div>@(roleDetail.CreatedBy ?? "System")</div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(roleDetail.ModifiedBy))
+                            {
+                                <div>
+                                    <small class="text-muted">Last Modified By</small>
+                                    <div>@roleDetail.ModifiedBy</div>
+                                </div>
+                            }
+                            <div>
+                                <small class="text-muted">Type</small>
+                                <div>
+                                    @if (roleDetail.IsSystemRole)
+                                    {
+                                        <span class="badge bg-warning">System Role</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">Custom Role</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string RoleId { get; set; } = string.Empty;
+    
+    private RoleDetailDto? roleDetail;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool ShowPermissions = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoleDetailsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(RoleId))
+        {
+            await LoadRoleDetailsAsync();
+        }
+    }
+
+    private async Task LoadRoleDetailsAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            Logger.LogDebug("Loading role details for role ID: {RoleId}", RoleId);
+
+            roleDetail = await AdminRoleService.GetRoleByIdAsync(RoleId);
+
+            Logger.LogInformation("Role details loaded successfully for role: {RoleName}", roleDetail.Name);
+        }
+        catch (ArgumentException ex)
+        {
+            Logger.LogWarning(ex, "Role not found: {RoleId}", RoleId);
+            errorMessage = "Role not found.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading role details for role ID: {RoleId}", RoleId);
+            errorMessage = "Unable to load role details. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private Dictionary<string, List<string>> GetPermissionsByCategory()
+    {
+        var result = new Dictionary<string, List<string>>();
+        var availablePermissions = new Dictionary<string, string>
+        {
+            // User Management
+            ["users.view"] = "User Management",
+            ["users.create"] = "User Management", 
+            ["users.edit"] = "User Management",
+            ["users.delete"] = "User Management",
+            
+            // Role Management
+            ["roles.view"] = "Role Management",
+            ["roles.manage"] = "Role Management",
+            ["roles.assign"] = "Role Management",
+            
+            // System Administration
+            ["system.settings"] = "System Admin",
+            ["system.logs"] = "System Admin",
+            ["system.backup"] = "System Admin",
+            
+            // Content Management
+            ["content.view"] = "Content",
+            ["content.create"] = "Content",
+            ["content.edit"] = "Content",
+            ["content.publish"] = "Content"
+        };
+
+        foreach (var permission in roleDetail?.Permissions ?? new List<string>())
+        {
+            if (permission == "All Permissions") continue;
+            
+            var category = availablePermissions.ContainsKey(permission) 
+                ? availablePermissions[permission] 
+                : "Other";
+            
+            if (!result.ContainsKey(category))
+                result[category] = new List<string>();
+            
+            result[category].Add(permission);
+        }
+
+        return result;
+    }
+
+    private string GetPermissionDisplayName(string permission)
+    {
+        var displayNames = new Dictionary<string, string>
+        {
+            ["users.view"] = "View Users",
+            ["users.create"] = "Create Users",
+            ["users.edit"] = "Edit Users", 
+            ["users.delete"] = "Delete Users",
+            ["roles.view"] = "View Roles",
+            ["roles.manage"] = "Manage Roles",
+            ["roles.assign"] = "Assign Roles",
+            ["system.settings"] = "System Settings",
+            ["system.logs"] = "View Logs",
+            ["system.backup"] = "Backup Data",
+            ["content.view"] = "View Content",
+            ["content.create"] = "Create Content",
+            ["content.edit"] = "Edit Content",
+            ["content.publish"] = "Publish Content"
+        };
+
+        return displayNames.ContainsKey(permission) ? displayNames[permission] : permission;
+    }
+
+    private void EditRole()
+    {
+        Navigation.NavigateTo($"/admin/roles?edit={RoleId}");
+    }
+
+    private void ManageUsers()
+    {
+        Navigation.NavigateTo($"/admin/roles?assign={RoleId}");
+    }
+
+    private void ViewUser(string userId)
+    {
+        Navigation.NavigateTo($"/admin/users/{userId}");
+    }
+
+    private async Task RemoveUser(string userId)
+    {
+        try
+        {
+            Logger.LogDebug("Removing user {UserId} from role {RoleId}", userId, RoleId);
+            
+            var result = await AdminRoleService.RemoveRoleFromUserAsync(userId, roleDetail!.Name);
+            
+            if (result.Succeeded)
+            {
+                await LoadRoleDetailsAsync(); // Reload to get updated user count
+                await JSRuntime.InvokeVoidAsync("alert", "User removed successfully from role.");
+            }
+            else
+            {
+                var error = string.Join(", ", result.Errors.Select(e => e.Description));
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to remove user: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error removing user {UserId} from role {RoleId}", userId, RoleId);
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while removing the user.");
+        }
+    }
+
+    private void CloneRole()
+    {
+        Navigation.NavigateTo($"/admin/roles?clone={RoleId}");
+    }
+
+    private void ExportRole()
+    {
+        // Placeholder for export functionality
+        JSRuntime.InvokeVoidAsync("alert", "Export functionality will be implemented in a future update.");
+    }
+
+    private void DeleteRole()
+    {
+        // This will be handled by a modal confirmation
+        JSRuntime.InvokeVoidAsync("alert", "Delete functionality will be implemented with proper confirmation modal.");
+    }
+}

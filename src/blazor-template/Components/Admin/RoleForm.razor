@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
 
 <style>
     .role-form-container {
