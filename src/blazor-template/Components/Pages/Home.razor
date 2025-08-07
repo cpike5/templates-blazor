@@ -666,14 +666,11 @@ else
             isLoading = true;
             StateHasChanged();
 
-            var tasks = new List<Task>
-            {
-                LoadUserStats(),
-                LoadCurrentUser(),
-                LoadRecentActivity()
-            };
-
-            await Task.WhenAll(tasks);
+            // Load data sequentially to avoid DbContext concurrency issues
+            // DbContext is not thread-safe and cannot handle concurrent operations
+            await LoadUserStats();
+            await LoadCurrentUser();
+            await LoadRecentActivity();
         }
         catch (Exception ex)
         {

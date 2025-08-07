@@ -65,36 +65,44 @@ namespace BlazorTemplate.Services
         {
             try
             {
-                using var scope = _scopeFactory.CreateScope();
-                var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
-
                 _logger.LogTrace("Collecting system health metrics");
 
-                // Collect all metrics in parallel for efficiency
+                // Collect all metrics in parallel with separate scopes for each task
+                // to avoid DbContext concurrency issues
                 var tasks = new[]
                 {
                     Task.Run(async () =>
                     {
+                        using var scope = _scopeFactory.CreateScope();
+                        var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
                         var memory = await systemMonitoring.GetMemoryUsageAsync();
                         await systemMonitoring.RecordHealthMetricAsync("Memory", memory.UsagePercentage.ToString("F1"));
                     }),
                     Task.Run(async () =>
                     {
+                        using var scope = _scopeFactory.CreateScope();
+                        var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
                         var storage = await systemMonitoring.GetStorageUsageAsync();
                         await systemMonitoring.RecordHealthMetricAsync("Storage", storage.UsagePercentage.ToString("F1"));
                     }),
                     Task.Run(async () =>
                     {
+                        using var scope = _scopeFactory.CreateScope();
+                        var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
                         var cpu = await systemMonitoring.GetCpuUsageAsync();
                         await systemMonitoring.RecordHealthMetricAsync("CPU", cpu.ToString("F1"));
                     }),
                     Task.Run(async () =>
                     {
+                        using var scope = _scopeFactory.CreateScope();
+                        var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
                         var uptime = await systemMonitoring.GetUptimeAsync();
                         await systemMonitoring.RecordHealthMetricAsync("Uptime", uptime.Uptime.TotalHours.ToString("F1"));
                     }),
                     Task.Run(async () =>
                     {
+                        using var scope = _scopeFactory.CreateScope();
+                        var systemMonitoring = scope.ServiceProvider.GetRequiredService<ISystemMonitoringService>();
                         var database = await systemMonitoring.GetDatabaseSizeAsync();
                         await systemMonitoring.RecordHealthMetricAsync("DatabaseSize", database.SizeBytes.ToString());
                     })

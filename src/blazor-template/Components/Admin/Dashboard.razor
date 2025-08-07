@@ -851,20 +851,13 @@
 
             Logger.LogDebug("Loading dashboard data");
 
-            // Load all dashboard data concurrently
-            var statisticsTask = DashboardService.GetStatisticsAsync();
-            var activitiesTask = DashboardService.GetRecentActivitiesAsync(5);
-            var statusTask = DashboardService.GetSystemStatusAsync();
-            var metricsTask = DashboardService.GetHealthMetricsAsync();
-            var roleStatsTask = AdminRoleService.GetRoleStatisticsAsync();
-
-            await Task.WhenAll(statisticsTask, activitiesTask, statusTask, metricsTask, roleStatsTask);
-
-            statistics = await statisticsTask;
-            recentActivities = await activitiesTask;
-            systemStatus = await statusTask;
-            healthMetrics = await metricsTask;
-            roleStats = await roleStatsTask;
+            // Load dashboard data sequentially to avoid DbContext concurrency issues
+            // DbContext is not thread-safe and cannot handle concurrent operations
+            statistics = await DashboardService.GetStatisticsAsync();
+            recentActivities = await DashboardService.GetRecentActivitiesAsync(5);
+            systemStatus = await DashboardService.GetSystemStatusAsync();
+            healthMetrics = await DashboardService.GetHealthMetricsAsync();
+            roleStats = await AdminRoleService.GetRoleStatisticsAsync();
 
             Logger.LogInformation("Dashboard data loaded successfully");
         }
