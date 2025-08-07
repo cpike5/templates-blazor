@@ -1,0 +1,317 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<style>
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1060;
+        max-width: 400px;
+    }
+
+    .toast {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+        overflow: hidden;
+        transform: translateX(400px);
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+
+    .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .toast.hide {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    .toast-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .toast-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 0.875rem;
+    }
+
+    .toast-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0;
+        flex: 1;
+    }
+
+    .toast-close {
+        background: transparent;
+        border: none;
+        font-size: 1.25rem;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .toast-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .toast-body {
+        padding: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    /* Success toast */
+    .toast.success .toast-header {
+        background: #d1ecf1;
+        color: #0c5460;
+        border-bottom-color: #bee5eb;
+    }
+
+    .toast.success .toast-icon {
+        background: #28a745;
+        color: white;
+    }
+
+    .toast.success .toast-body {
+        color: #155724;
+        background: #d4edda;
+    }
+
+    /* Error toast */
+    .toast.error .toast-header {
+        background: #f8d7da;
+        color: #721c24;
+        border-bottom-color: #f5c6cb;
+    }
+
+    .toast.error .toast-icon {
+        background: #dc3545;
+        color: white;
+    }
+
+    .toast.error .toast-body {
+        color: #721c24;
+        background: #f8d7da;
+    }
+
+    /* Warning toast */
+    .toast.warning .toast-header {
+        background: #fff3cd;
+        color: #856404;
+        border-bottom-color: #ffeaa7;
+    }
+
+    .toast.warning .toast-icon {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .toast.warning .toast-body {
+        color: #856404;
+        background: #fff3cd;
+    }
+
+    /* Info toast */
+    .toast.info .toast-header {
+        background: #d1ecf1;
+        color: #0c5460;
+        border-bottom-color: #bee5eb;
+    }
+
+    .toast.info .toast-icon {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .toast.info .toast-body {
+        color: #0c5460;
+        background: #d1ecf1;
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 768px) {
+        .toast-container {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+
+        .toast {
+            transform: translateY(-100px);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.hide {
+            transform: translateY(-100px);
+        }
+    }
+</style>
+
+<div class="toast-container" id="toast-container">
+    @if (Toasts.Any())
+    {
+        @foreach (var toast in Toasts)
+        {
+            <div class="toast @toast.Type.ToString().ToLower() @(toast.IsVisible ? "show" : "")" 
+                 id="toast-@toast.Id">
+                <div class="toast-header">
+                    <div class="toast-icon">
+                        @switch (toast.Type)
+                        {
+                            case ToastType.Success:
+                                <i class="fas fa-check"></i>
+                                break;
+                            case ToastType.Error:
+                                <i class="fas fa-times"></i>
+                                break;
+                            case ToastType.Warning:
+                                <i class="fas fa-exclamation"></i>
+                                break;
+                            case ToastType.Info:
+                                <i class="fas fa-info"></i>
+                                break;
+                        }
+                    </div>
+                    <h5 class="toast-title">@toast.Title</h5>
+                    <button type="button" class="toast-close" @onclick="() => HideToast(toast.Id)">
+                        ×
+                    </button>
+                </div>
+                <div class="toast-body">
+                    @toast.Message
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<Toast> Toasts = new();
+    private int _nextId = 1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("window.blazorToast.initialize");
+        }
+    }
+
+    public void ShowSuccess(string title, string message, int duration = 5000)
+    {
+        ShowToast(ToastType.Success, title, message, duration);
+    }
+
+    public void ShowError(string title, string message, int duration = 8000)
+    {
+        ShowToast(ToastType.Error, title, message, duration);
+    }
+
+    public void ShowWarning(string title, string message, int duration = 6000)
+    {
+        ShowToast(ToastType.Warning, title, message, duration);
+    }
+
+    public void ShowInfo(string title, string message, int duration = 5000)
+    {
+        ShowToast(ToastType.Info, title, message, duration);
+    }
+
+    private void ShowToast(ToastType type, string title, string message, int duration)
+    {
+        var toast = new Toast
+        {
+            Id = _nextId++,
+            Type = type,
+            Title = title,
+            Message = message,
+            Duration = duration
+        };
+
+        Toasts.Add(toast);
+        StateHasChanged();
+
+        // Show the toast after a brief delay for smooth animation
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(50);
+            await InvokeAsync(() =>
+            {
+                toast.IsVisible = true;
+                StateHasChanged();
+            });
+
+            // Auto-hide after duration
+            await Task.Delay(duration);
+            await InvokeAsync(() => HideToast(toast.Id));
+        });
+    }
+
+    private async Task HideToast(int toastId)
+    {
+        var toast = Toasts.FirstOrDefault(t => t.Id == toastId);
+        if (toast != null)
+        {
+            toast.IsVisible = false;
+            StateHasChanged();
+
+            // Remove from list after animation completes
+            await Task.Delay(300);
+            Toasts.Remove(toast);
+            StateHasChanged();
+        }
+    }
+
+    public void ClearAll()
+    {
+        Toasts.Clear();
+        StateHasChanged();
+    }
+
+    private class Toast
+    {
+        public int Id { get; set; }
+        public ToastType Type { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public int Duration { get; set; }
+        public bool IsVisible { get; set; }
+    }
+
+    public enum ToastType
+    {
+        Success,
+        Error,
+        Warning,
+        Info
+    }
+}
