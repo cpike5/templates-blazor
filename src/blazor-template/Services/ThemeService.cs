@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace BlazorTemplate.Services;
 
@@ -46,7 +47,9 @@ public class ThemeService
     /// </summary>
     private Dictionary<string, string> InitializeThemeMapping()
     {
-        return new Dictionary<string, string>
+        _logger.LogTrace("Initializing theme mapping dictionary");
+        
+        var themeMap = new Dictionary<string, string>
         {
             { "default", "" }, // No class for default theme
             { "executive-purple", "executive-purple" },
@@ -63,6 +66,11 @@ public class ThemeService
             { "medical-teal", "medical-teal" },
             { "executive-charcoal", "executive-charcoal" }
         };
+        
+        _logger.LogDebug("Theme mapping initialized with {ThemeCount} themes: {ThemeNames}",
+            themeMap.Count, string.Join(", ", themeMap.Keys));
+            
+        return themeMap;
     }
 
     /// <summary>
@@ -99,16 +107,30 @@ public class ThemeService
         return string.Join(" ", classes);
     }
 
+    /// <summary>
+    /// Ensures the theme service is initialized with server-side theme preferences
+    /// </summary>
+    /// <returns>True if initialization succeeds, false otherwise</returns>
     public async Task<bool> EnsureInitializedAsync()
     {
+        
         if (_isInitialized)
+        {
+            _logger.LogTrace("ThemeService already initialized");
             return true;
+        }
+        
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("Starting ThemeService initialization");
 
         await _initSemaphore.WaitAsync();
         try
         {
             if (_isInitialized)
+            {
+                _logger.LogTrace("ThemeService was initialized by another thread");
                 return true;
+            }
 
             _initializationTask = new TaskCompletionSource<bool>();
             
@@ -117,7 +139,21 @@ public class ThemeService
             
             _isInitialized = true;
             _initializationTask.SetResult(true);
+            
+            stopwatch.Stop();
+            _logger.LogInformation("ThemeService initialization completed in {ElapsedMs}ms (Theme: {CurrentTheme}, DarkMode: {IsDarkMode})",
+                stopwatch.ElapsedMilliseconds, _currentTheme, _isDarkMode);
+                
             return true;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError(ex, "ThemeService initialization failed after {ElapsedMs}ms",
+                stopwatch.ElapsedMilliseconds);
+            
+            _initializationTask?.SetResult(false);
+            return false;
         }
         finally
         {
@@ -158,19 +194,39 @@ public class ThemeService
         }
     }
 
+    /// <summary>
+    /// Loads theme preferences from server-side sources (database for authenticated users)
+    /// </summary>
     private async Task LoadThemeFromServerSideSourcesAsync()
     {
+        var stopwatch = Stopwatch.StartNew();
+        
+        _logger.LogTrace("Loading theme from server-side sources");
+        
         try
         {
             // Try to load from database first for authenticated users
             var authState = await _authStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
+            var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+            
+            _logger.LogTrace("User authentication status: {IsAuthenticated}", isAuthenticated);
+            
+            if (isAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(authState.User);
                 if (user?.ThemePreference != null)
                 {
+                    _logger.LogDebug("Found user theme preference: {ThemePreference}", user.ThemePreference);
                     await LoadUserThemeAsync(user.ThemePreference);
+                    
+                    stopwatch.Stop();
+                    _logger.LogDebug("Loaded user theme preference in {ElapsedMs}ms (Theme: {CurrentTheme}, DarkMode: {IsDarkMode})",
+                        stopwatch.ElapsedMilliseconds, _currentTheme, _isDarkMode);
                     return;
+                }
+                else
+                {
+                    _logger.LogTrace("User found but no theme preference set, using defaults");
                 }
             }
         }
@@ -185,6 +241,10 @@ public class ThemeService
         {
             _currentTheme = "default";
             _isDarkMode = false;
+            
+            stopwatch.Stop();
+            _logger.LogDebug("Set default theme preferences in {ElapsedMs}ms (Theme: {CurrentTheme}, DarkMode: {IsDarkMode})",
+                stopwatch.ElapsedMilliseconds, _currentTheme, _isDarkMode);
         }
         finally
         {
@@ -380,20 +440,54 @@ public class ThemeService
         }
     }
 
+    /// <summary>
+    /// Loads and parses user theme preferences from the serialized preference string
+    /// </summary>
+    /// <param name='themePreference'>Serialized theme preference string (theme|darkMode)</param>
     private async Task LoadUserThemeAsync(string themePreference)
     {
+        
+        if (string.IsNullOrWhiteSpace(themePreference))
+        {
+            _logger.LogWarning("LoadUserThemeAsync called with null or empty theme preference");
+            return;
+        }
+        
+        _logger.LogTrace("Parsing user theme preference: {ThemePreference}", themePreference);
+        
         await _stateLock.WaitAsync();
         try
         {
-            var parts = themePreference.Split('|');
+            var parts = themePreference.Split("|");
+            
             if (parts.Length >= 1)
             {
-                _currentTheme = parts[0];
+                var themeName = parts[0];
+                if (_themeClassMap.ContainsKey(themeName))
+                {
+                    _currentTheme = themeName;
+                    _logger.LogTrace("Loaded theme: {ThemeName}", themeName);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid theme name in preference: {ThemeName}, using default", themeName);
+                    _currentTheme = "default";
+                }
             }
+            
             if (parts.Length >= 2 && bool.TryParse(parts[1], out var darkMode))
             {
                 _isDarkMode = darkMode;
+                _logger.LogTrace("Loaded dark mode preference: {IsDarkMode}", darkMode);
             }
+            else if (parts.Length >= 2)
+            {
+                _logger.LogWarning("Invalid dark mode value in preference: {DarkModeValue}, using false", parts[1]);
+                _isDarkMode = false;
+            }
+            
+            _logger.LogDebug("Successfully parsed theme preference (Theme: {CurrentTheme}, DarkMode: {IsDarkMode})",
+                _currentTheme, _isDarkMode);
         }
         catch (Exception ex)
         {

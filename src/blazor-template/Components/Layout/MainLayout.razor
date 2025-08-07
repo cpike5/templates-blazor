@@ -1,5 +1,7 @@
 ﻿@using BlazorTemplate.Services
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject IToastService ToastService
 
 <div class="layout-wrapper">
     <TopNavbar />
@@ -14,12 +16,49 @@
     </main>
 </div>
 
+<!-- Toast Notifications -->
+<BlazorTemplate.Components.Shared.ToastNotification @ref="toastComponent" />
+
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
 
+<script src="~/js/toast.js"></script>
+
 @code {
-    // Theme initialization now handled by ThemeApplicator component
+    private BlazorTemplate.Components.Shared.ToastNotification? toastComponent;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnToastRequested += HandleToastRequested;
+    }
+
+    private void HandleToastRequested(ToastMessage toastMessage)
+    {
+        if (toastComponent != null)
+        {
+            switch (toastMessage.Type)
+            {
+                case ToastType.Success:
+                    toastComponent.ShowSuccess(toastMessage.Title, toastMessage.Message, toastMessage.Duration);
+                    break;
+                case ToastType.Error:
+                    toastComponent.ShowError(toastMessage.Title, toastMessage.Message, toastMessage.Duration);
+                    break;
+                case ToastType.Warning:
+                    toastComponent.ShowWarning(toastMessage.Title, toastMessage.Message, toastMessage.Duration);
+                    break;
+                case ToastType.Info:
+                    toastComponent.ShowInfo(toastMessage.Title, toastMessage.Message, toastMessage.Duration);
+                    break;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnToastRequested -= HandleToastRequested;
+    }
 }
