@@ -1,4 +1,4 @@
-using BlazorTemplate.DTO;
+using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace BlazorTemplate.Services

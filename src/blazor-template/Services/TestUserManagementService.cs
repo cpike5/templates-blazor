@@ -1,5 +1,5 @@
 using BlazorTemplate.Data;
-using BlazorTemplate.DTO;
+using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

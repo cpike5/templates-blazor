@@ -1,5 +1,5 @@
 using BlazorTemplate.Data;
-using BlazorTemplate.DTO;
+using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -379,7 +379,7 @@ namespace BlazorTemplate.Services
                     LockoutEnabled = user.LockoutEnabled,
                     LockoutEnd = user.LockoutEnd,
                     CreatedAt = DateTime.UtcNow, // This would come from user creation tracking
-                    LastLogin = null, // This would come from login tracking
+                    LastLogin = DateTime.MinValue, // This would come from login tracking
                     Roles = userRoles.ToList(),
                     PhoneNumber = user.PhoneNumber,
                     TwoFactorEnabled = user.TwoFactorEnabled

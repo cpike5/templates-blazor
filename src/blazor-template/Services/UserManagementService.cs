@@ -1,5 +1,5 @@
 using BlazorTemplate.Data;
-using BlazorTemplate.DTO;
+using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,7 +77,7 @@ namespace BlazorTemplate.Services
             {
                 Items = userDtos,
                 TotalCount = totalCount,
-                PageNumber = criteria.PageNumber,
+                CurrentPage = criteria.Page,
                 PageSize = criteria.PageSize
             };
         }
@@ -108,7 +108,7 @@ namespace BlazorTemplate.Services
                 SecurityStamp = user.SecurityStamp,
                 ConcurrencyStamp = user.ConcurrencyStamp,
                 RecentActivity = recentActivity,
-                Claims = claims.ToDictionary(c => c.Type, c => c.Value)
+                Claims = claims.Select(c => $"{c.Type}: {c.Value}").ToList()
             };
         }
 
