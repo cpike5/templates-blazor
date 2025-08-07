@@ -26,4 +26,8 @@
     <Folder Include="logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="blazor-template.Tests" />
+  </ItemGroup>
+
 </Project>
