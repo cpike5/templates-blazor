@@ -22,6 +22,43 @@ namespace BlazorTemplate.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BlazorTemplate.Data.ApplicationSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsEncrypted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Key");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("LastModified");
+
+                    b.HasIndex("ModifiedBy");
+
+                    b.HasIndex("Category", "Key");
+
+                    b.ToTable("ApplicationSettings");
+                });
+
             modelBuilder.Entity("BlazorTemplate.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -208,6 +245,120 @@ namespace BlazorTemplate.Migrations
                     b.ToTable("InviteCodes");
                 });
 
+            modelBuilder.Entity("BlazorTemplate.Data.RolePermission", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsGranted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("PermissionName");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("RoleId", "PermissionName");
+
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("BlazorTemplate.Data.SettingsAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SettingsKey")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SettingsKey");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("SettingsKey", "Timestamp");
+
+                    b.ToTable("SettingsAuditLogs");
+                });
+
+            modelBuilder.Entity("BlazorTemplate.Data.SystemHealthMetric", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("MetricType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MetricValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MetricType");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("MetricType", "Timestamp");
+
+                    b.ToTable("SystemHealthMetrics");
+                });
+
             modelBuilder.Entity("BlazorTemplate.Data.UserActivity", b =>
                 {
                     b.Property<string>("Id")
@@ -382,6 +533,16 @@ namespace BlazorTemplate.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BlazorTemplate.Data.ApplicationSetting", b =>
+                {
+                    b.HasOne("BlazorTemplate.Data.ApplicationUser", "ModifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModifiedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ModifiedByUser");
+                });
+
             modelBuilder.Entity("BlazorTemplate.Data.EmailInvite", b =>
                 {
                     b.HasOne("BlazorTemplate.Data.ApplicationUser", "CreatedByUser")
@@ -416,6 +577,26 @@ namespace BlazorTemplate.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("UsedByUser");
+                });
+
+            modelBuilder.Entity("BlazorTemplate.Data.RolePermission", b =>
+                {
+                    b.HasOne("BlazorTemplate.Data.ApplicationUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("BlazorTemplate.Data.SettingsAuditLog", b =>
+                {
+                    b.HasOne("BlazorTemplate.Data.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BlazorTemplate.Data.UserActivity", b =>

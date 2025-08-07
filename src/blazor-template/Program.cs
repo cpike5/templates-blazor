@@ -34,6 +34,17 @@ namespace BlazorTemplate
             builder.Services.AddNavigationServices(builder.Configuration);
             builder.Services.AddAdminServices();
             builder.Services.AddScoped<ThemeService>();
+            
+            // Settings services
+            builder.Services.AddScoped<ISettingsService, SettingsService>();
+            builder.Services.AddScoped<ISettingsEncryptionService, SettingsEncryptionService>();
+            builder.Services.AddMemoryCache();
+            
+            // UI services
+            builder.Services.AddScoped<IToastService, ToastService>();
+            
+            // Background services
+            builder.Services.AddHostedService<SystemHealthBackgroundService>();
 
 
             // Add services to the container.

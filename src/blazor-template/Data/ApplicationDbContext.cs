@@ -8,6 +8,10 @@ namespace BlazorTemplate.Data
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<InviteCode> InviteCodes { get; set; }
         public DbSet<EmailInvite> EmailInvites { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<ApplicationSetting> ApplicationSettings { get; set; }
+        public DbSet<SystemHealthMetric> SystemHealthMetrics { get; set; }
+        public DbSet<SettingsAuditLog> SettingsAuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -62,6 +66,56 @@ namespace BlazorTemplate.Data
                 entity.HasOne(e => e.UsedByUser)
                     .WithMany()
                     .HasForeignKey(e => e.UsedByUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure RolePermission entity
+            builder.Entity<RolePermission>(entity =>
+            {
+                entity.HasIndex(e => e.RoleId);
+                entity.HasIndex(e => e.PermissionName);
+                entity.HasIndex(e => new { e.RoleId, e.PermissionName });
+                entity.HasIndex(e => e.CreatedAt);
+                
+                entity.HasOne(e => e.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreatedBy)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure ApplicationSetting entity
+            builder.Entity<ApplicationSetting>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.HasIndex(e => e.Category);
+                entity.HasIndex(e => e.LastModified);
+                entity.HasIndex(e => new { e.Category, e.Key });
+                
+                entity.HasOne(e => e.ModifiedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ModifiedBy)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure SystemHealthMetric entity
+            builder.Entity<SystemHealthMetric>(entity =>
+            {
+                entity.HasIndex(e => e.Timestamp);
+                entity.HasIndex(e => e.MetricType);
+                entity.HasIndex(e => new { e.MetricType, e.Timestamp });
+            });
+
+            // Configure SettingsAuditLog entity
+            builder.Entity<SettingsAuditLog>(entity =>
+            {
+                entity.HasIndex(e => e.SettingsKey);
+                entity.HasIndex(e => e.Timestamp);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => new { e.SettingsKey, e.Timestamp });
+                
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
 

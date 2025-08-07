@@ -5,7 +5,7 @@
         public static readonly string SectionName = "Site";
         public AdministrationOptions Administration { get; set; } = new AdministrationOptions();
         public SetupOptions Setup { get; set; } = new SetupOptions();
-
+        public SettingsOptions Settings { get; set; } = new SettingsOptions();
     }
     public class AdministrationOptions
     {
@@ -89,5 +89,18 @@
         public int DefaultCodeExpirationHours { get; set; } = 24;
         public int DefaultEmailInviteExpirationHours { get; set; } = 72;
         public int MaxActiveCodesPerAdmin { get; set; } = 50;
+    }
+
+    public class SettingsOptions
+    {
+        public bool EnableBackups { get; set; } = true;
+        public string EncryptionKey { get; set; } = "DefaultKeyForDevelopmentOnly!";
+        public CacheSettingsOptions CacheSettings { get; set; } = new CacheSettingsOptions();
+    }
+
+    public class CacheSettingsOptions
+    {
+        public bool Enabled { get; set; } = true;
+        public int ExpirationMinutes { get; set; } = 30;
     }
 }
