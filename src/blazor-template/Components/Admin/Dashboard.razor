@@ -1,9 +1,16 @@
 ﻿@page "/admin"
 @using BlazorTemplate.Components.Layout
 @using BlazorTemplate.Data
+@using BlazorTemplate.Services
+@using BlazorTemplate.Models
+@using BlazorTemplate.Models.Dashboard
 @using Microsoft.AspNetCore.Authorization
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@inject IDashboardService DashboardService
+@inject IAdminRoleService AdminRoleService
+@inject ILogger<Dashboard> Logger
+@rendermode InteractiveServer
 
 <style>
     .admin-dashboard {
@@ -456,63 +463,102 @@
     </div>
 
     <!-- Statistics Overview -->
-    <div class="stats-overview">
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon users">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-trend up">
-                    <i class="fas fa-arrow-up"></i>
-                    +12%
-                </div>
+    @if (isLoading)
+    {
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
-            <div class="stat-value">24</div>
-            <p class="stat-label">Total Users</p>
+            <p class="mt-2 text-muted">Loading dashboard data...</p>
         </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @errorMessage
+            <button class="btn btn-outline-danger btn-sm ms-auto" @onclick="RefreshDataAsync">
+                <i class="fas fa-refresh"></i> Retry
+            </button>
+        </div>
+    }
+    else if (statistics != null)
+    {
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-trend @GetTrendClass(statistics.TotalUsers, 0)">
+                        <i class="@GetTrendIcon(statistics.TotalUsers, 0)"></i>
+                        @* TODO: Calculate actual trend percentage *@
+                        +12%
+                    </div>
+                </div>
+                <div class="stat-value">@statistics.TotalUsers</div>
+                <p class="stat-label">Total Users</p>
+            </div>
 
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon roles">
-                    <i class="fas fa-user-shield"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon roles">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="stat-trend neutral">
+                        <i class="fas fa-minus"></i>
+                        @if (roleStats != null)
+                        {
+                            <text>@roleStats.CustomRoles custom</text>
+                        }
+                        else
+                        {
+                            <text>0%</text>
+                        }
+                    </div>
                 </div>
-                <div class="stat-trend neutral">
-                    <i class="fas fa-minus"></i>
-                    0%
+                <div class="stat-value">
+                    @if (roleStats != null)
+                    {
+                        @roleStats.TotalRoles
+                    }
+                    else
+                    {
+                        @statistics.TotalRoles
+                    }
                 </div>
+                <p class="stat-label">Total Roles</p>
             </div>
-            <div class="stat-value">4</div>
-            <p class="stat-label">Active Roles</p>
-        </div>
 
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon activity">
-                    <i class="fas fa-chart-line"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon activity">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-trend @GetTrendClass(statistics.TodaysSessions, 0)">
+                        <i class="@GetTrendIcon(statistics.TodaysSessions, 0)"></i>
+                        +8%
+                    </div>
                 </div>
-                <div class="stat-trend up">
-                    <i class="fas fa-arrow-up"></i>
-                    +8%
-                </div>
+                <div class="stat-value">@statistics.TodaysSessions</div>
+                <p class="stat-label">Today's Sessions</p>
             </div>
-            <div class="stat-value">156</div>
-            <p class="stat-label">Today's Sessions</p>
-        </div>
 
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon security">
-                    <i class="fas fa-shield-alt"></i>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon security">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stat-trend @GetTrendClass(0, statistics.SecurityAlerts)">
+                        <i class="@GetTrendIcon(0, statistics.SecurityAlerts)"></i>
+                        @if (statistics.SecurityAlerts > 0) { <text>-@statistics.SecurityAlerts</text> } else { <text>0</text> }
+                    </div>
                 </div>
-                <div class="stat-trend down">
-                    <i class="fas fa-arrow-down"></i>
-                    -3
-                </div>
+                <div class="stat-value">@statistics.SecurityAlerts</div>
+                <p class="stat-label">Security Alerts</p>
             </div>
-            <div class="stat-value">2</div>
-            <p class="stat-label">Security Alerts</p>
         </div>
-    </div>
+    }
 
     <!-- Dashboard Content -->
     <div class="dashboard-content">
@@ -570,6 +616,58 @@
                 </div>
             </div>
 
+            <!-- Role Analytics -->
+            @if (roleStats != null)
+            {
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">
+                            <div class="panel-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            Role Distribution
+                        </h3>
+                        <a href="/admin/roles" class="btn btn-outline-primary btn-sm">Manage Roles</a>
+                    </div>
+                    <div class="panel-body">
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #ffc107;">@roleStats.SystemRoles</div>
+                                <div class="stat-label">System Roles</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #17a2b8;">@roleStats.CustomRoles</div>
+                                <div class="stat-label">Custom Roles</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #28a745;">@roleStats.TotalAssignments</div>
+                                <div class="stat-label">Total Assignments</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">Role Assignment Rate</small>
+                                <small class="text-muted">
+                                    @if (statistics != null && roleStats.TotalAssignments > 0)
+                                    {
+                                        @Math.Round((double)roleStats.TotalAssignments / statistics.TotalUsers * 100, 1)<text>%</text>
+                                    }
+                                    else
+                                    {
+                                        <text>0%</text>
+                                    }
+                                </small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" 
+                                     style="width: @(statistics != null && roleStats.TotalAssignments > 0 ? Math.Min((double)roleStats.TotalAssignments / statistics.TotalUsers * 100, 100) : 0)%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <!-- Recent Activity -->
             <div class="panel">
                 <div class="panel-header">
@@ -582,48 +680,48 @@
                     <a href="/admin/logs" class="btn btn-outline-primary btn-sm">View All</a>
                 </div>
                 <div class="panel-body">
-                    <div class="activity-feed">
-                        <div class="activity-item">
-                            <div class="activity-avatar">JD</div>
-                            <div class="activity-content">
-                                <h6>John Doe logged in</h6>
-                                <small>User authentication successful from 192.168.1.100</small>
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                            <div class="activity-time">2 min ago</div>
+                            <p class="mt-2 text-muted">Loading activities...</p>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-avatar">SA</div>
-                            <div class="activity-content">
-                                <h6>New user registered</h6>
-                                <small>Sarah Wilson created account and assigned User role</small>
-                            </div>
-                            <div class="activity-time">15 min ago</div>
+                    }
+                    else if (recentActivities?.Any() == true)
+                    {
+                        <div class="activity-feed">
+                            @foreach (var activity in recentActivities)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-avatar">@activity.InitialsAvatar</div>
+                                    <div class="activity-content">
+                                        <h6>@activity.Action</h6>
+                                        <small>
+                                            @activity.DisplayName
+                                            @if (!string.IsNullOrEmpty(activity.Details))
+                                            {
+                                                <text> - @activity.Details</text>
+                                            }
+                                            @if (!string.IsNullOrEmpty(activity.IpAddress))
+                                            {
+                                                <text> from @activity.IpAddress</text>
+                                            }
+                                        </small>
+                                    </div>
+                                    <div class="activity-time">@activity.TimeAgo</div>
+                                </div>
+                            }
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-avatar">MW</div>
-                            <div class="activity-content">
-                                <h6>Mike Wilson updated profile</h6>
-                                <small>Changed phone number and department</small>
-                            </div>
-                            <div class="activity-time">1 hour ago</div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-history fa-2x mb-2"></i>
+                            <p>No recent activities found</p>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-avatar">JS</div>
-                            <div class="activity-content">
-                                <h6>Jane Smith role changed</h6>
-                                <small>Administrator assigned Manager role</small>
-                            </div>
-                            <div class="activity-time">3 hours ago</div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-avatar">RB</div>
-                            <div class="activity-content">
-                                <h6>Failed login attempt</h6>
-                                <small>User robert.brown@company.com - Account locked</small>
-                            </div>
-                            <div class="activity-time">4 hours ago</div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -641,56 +739,42 @@
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <div class="system-status">
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-icon healthy">
-                                    <i class="fas fa-database"></i>
-                                </div>
-                                <div class="status-details">
-                                    <h6>Database</h6>
-                                    <small>SQL Server connection active</small>
-                                </div>
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                            <span class="status-badge healthy">Healthy</span>
+                            <p class="mt-2 text-muted">Checking system status...</p>
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-icon healthy">
-                                    <i class="fas fa-envelope"></i>
+                    }
+                    else if (systemStatus?.Any() == true)
+                    {
+                        <div class="system-status">
+                            @foreach (var item in systemStatus)
+                            {
+                                <div class="status-item">
+                                    <div class="status-info">
+                                        <div class="status-icon @GetStatusCssClass(item.Status)">
+                                            <i class="@item.Icon"></i>
+                                        </div>
+                                        <div class="status-details">
+                                            <h6>@item.Name</h6>
+                                            <small>@item.Description</small>
+                                        </div>
+                                    </div>
+                                    <span class="status-badge @GetStatusCssClass(item.Status)">@GetStatusDisplayText(item.Status)</span>
                                 </div>
-                                <div class="status-details">
-                                    <h6>Email Service</h6>
-                                    <small>SMTP server responding</small>
-                                </div>
-                            </div>
-                            <span class="status-badge healthy">Online</span>
+                            }
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-icon warning">
-                                    <i class="fas fa-shield-alt"></i>
-                                </div>
-                                <div class="status-details">
-                                    <h6>Security</h6>
-                                    <small>2 failed login attempts detected</small>
-                                </div>
-                            </div>
-                            <span class="status-badge warning">Warning</span>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-server fa-2x mb-2"></i>
+                            <p>Unable to load system status</p>
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-icon healthy">
-                                    <i class="fas fa-memory"></i>
-                                </div>
-                                <div class="status-details">
-                                    <h6>Memory Usage</h6>
-                                    <small>68% of available memory</small>
-                                </div>
-                            </div>
-                            <span class="status-badge healthy">Normal</span>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
 
@@ -705,44 +789,39 @@
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <div class="system-status">
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-details">
-                                    <h6>Uptime</h6>
-                                    <small>System running for 15 days, 4 hours</small>
-                                </div>
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                            <span class="status-badge healthy">99.8%</span>
+                            <p class="mt-2 text-muted">Loading health metrics...</p>
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-details">
-                                    <h6>Response Time</h6>
-                                    <small>Average server response</small>
+                    }
+                    else if (healthMetrics?.Any() == true)
+                    {
+                        <div class="system-status">
+                            @foreach (var metric in healthMetrics)
+                            {
+                                <div class="status-item">
+                                    <div class="status-info">
+                                        <div class="status-details">
+                                            <h6>@metric.Name</h6>
+                                            <small>@metric.Description</small>
+                                        </div>
+                                    </div>
+                                    <span class="status-badge @GetStatusCssClass(metric.Status)">@metric.Value</span>
                                 </div>
-                            </div>
-                            <span class="status-badge healthy">120ms</span>
+                            }
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-details">
-                                    <h6>Active Sessions</h6>
-                                    <small>Currently logged in users</small>
-                                </div>
-                            </div>
-                            <span class="status-badge healthy">18</span>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-heartbeat fa-2x mb-2"></i>
+                            <p>Unable to load health metrics</p>
                         </div>
-                        <div class="status-item">
-                            <div class="status-info">
-                                <div class="status-details">
-                                    <h6>Storage</h6>
-                                    <small>Database and file storage</small>
-                                </div>
-                            </div>
-                            <span class="status-badge warning">75%</span>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -750,5 +829,96 @@
 </div>
 
 @code {
-    // Mock data and dashboard logic will go here later
+    private DashboardStatistics? statistics;
+    private RoleStatsDto? roleStats;
+    private List<RecentActivityItem> recentActivities = new();
+    private List<SystemStatusItem> systemStatus = new();
+    private List<HealthMetricItem> healthMetrics = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardDataAsync();
+    }
+
+    private async Task LoadDashboardDataAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            Logger.LogDebug("Loading dashboard data");
+
+            // Load all dashboard data concurrently
+            var statisticsTask = DashboardService.GetStatisticsAsync();
+            var activitiesTask = DashboardService.GetRecentActivitiesAsync(5);
+            var statusTask = DashboardService.GetSystemStatusAsync();
+            var metricsTask = DashboardService.GetHealthMetricsAsync();
+            var roleStatsTask = AdminRoleService.GetRoleStatisticsAsync();
+
+            await Task.WhenAll(statisticsTask, activitiesTask, statusTask, metricsTask, roleStatsTask);
+
+            statistics = await statisticsTask;
+            recentActivities = await activitiesTask;
+            systemStatus = await statusTask;
+            healthMetrics = await metricsTask;
+            roleStats = await roleStatsTask;
+
+            Logger.LogInformation("Dashboard data loaded successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading dashboard data");
+            errorMessage = "Unable to load dashboard data. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        Logger.LogDebug("Refreshing dashboard data");
+        await LoadDashboardDataAsync();
+    }
+
+    private string GetTrendClass(int current, int previous)
+    {
+        if (current > previous) return "up";
+        if (current < previous) return "down";
+        return "neutral";
+    }
+
+    private string GetTrendIcon(int current, int previous)
+    {
+        if (current > previous) return "fas fa-arrow-up";
+        if (current < previous) return "fas fa-arrow-down";
+        return "fas fa-minus";
+    }
+
+    private string GetStatusCssClass(SystemStatus status)
+    {
+        return status switch
+        {
+            SystemStatus.Healthy => "healthy",
+            SystemStatus.Warning => "warning",
+            SystemStatus.Error => "error",
+            _ => "unknown"
+        };
+    }
+
+    private string GetStatusDisplayText(SystemStatus status)
+    {
+        return status switch
+        {
+            SystemStatus.Healthy => "Healthy",
+            SystemStatus.Warning => "Warning",
+            SystemStatus.Error => "Error",
+            _ => "Unknown"
+        };
+    }
 }
