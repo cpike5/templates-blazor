@@ -1,6 +1,7 @@
 ﻿@using BlazorTemplate
 @using BlazorTemplate.Components
 @using BlazorTemplate.Data
+@using Microsoft.AspNetCore.Authentication.JwtBearer
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
@@ -363,6 +364,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+        hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync())
+            .Where(x => x.Name != JwtBearerDefaults.AuthenticationScheme && x.Name != "JWT_OR_COOKIE").Any();
     }
 }

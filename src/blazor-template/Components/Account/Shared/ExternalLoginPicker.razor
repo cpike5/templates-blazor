@@ -2,6 +2,7 @@
 @using BlazorTemplate.Components
 @using BlazorTemplate.Data
 @using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.JwtBearer
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
@@ -40,6 +41,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        externalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToArray();
+        var schemes = await SignInManager.GetExternalAuthenticationSchemesAsync();
+        // Filter out JWT schemes to hide them from UI
+        externalLogins = schemes.Where(x => x.Name != JwtBearerDefaults.AuthenticationScheme && x.Name != "JWT_OR_COOKIE").ToArray();
     }
 }

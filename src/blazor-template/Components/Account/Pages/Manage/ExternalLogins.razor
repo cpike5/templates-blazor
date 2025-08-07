@@ -5,6 +5,7 @@
 @using BlazorTemplate.Components.Account.Shared
 @using BlazorTemplate.Data
 @using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.JwtBearer
 @using Microsoft.AspNetCore.Identity
 
 @inject UserManager<ApplicationUser> UserManager
@@ -571,7 +572,7 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         currentLogins = await UserManager.GetLoginsAsync(user);
         otherLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync())
-            .Where(auth => currentLogins.All(ul => auth.Name != ul.LoginProvider))
+            .Where(auth => auth.Name != JwtBearerDefaults.AuthenticationScheme && auth.Name != "JWT_OR_COOKIE" && currentLogins.All(ul => auth.Name != ul.LoginProvider))
             .ToList();
 
         string? passwordHash = null;
