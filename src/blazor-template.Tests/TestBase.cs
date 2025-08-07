@@ -6,6 +6,15 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using BlazorTemplate.Data;
 using BlazorTemplate.Configuration;
+using BlazorTemplate.Services.Navigation;
+using BlazorTemplate.Services.Auth;
+using BlazorTemplate.Services.Invites;
+using BlazorTemplate.Services.Setup;
+using BlazorTemplate.Services.UI;
+using BlazorTemplate.Services.Settings;
+using BlazorTemplate.Services.Monitoring;
+using BlazorTemplate.Configuration.Navigation;
+using Moq;
 using System.Security.Claims;
 
 namespace blazor_template.Tests.Infrastructure;
@@ -94,6 +103,41 @@ public abstract class TestBase : IDisposable
 
         // Add logging
         services.AddLogging(builder => builder.AddConsole());
+        
+        // Register application services
+        RegisterApplicationServices(services);
+    }
+    
+    protected virtual void RegisterApplicationServices(IServiceCollection services)
+    {
+        // Navigation services
+        services.Configure<NavigationConfiguration>(Configuration.GetSection(NavigationConfiguration.SectionName));
+        services.AddScoped<INavigationService, NavigationService>();
+        
+        // Auth services
+        services.AddScoped<IUserManagementService, UserManagementService>();
+        services.AddScoped<IUserRoleService, UserRoleService>();
+        services.AddScoped<IAdminRoleService, AdminRoleService>();
+        
+        // Invite services
+        services.AddScoped<IInviteService, InviteService>();
+        services.AddScoped<IEmailInviteService, EmailInviteService>();
+        
+        // Setup services
+        services.AddSingleton<IFirstTimeSetupService, FirstTimeSetupService>();
+        services.AddScoped<DataSeeder>();
+        
+        // UI services
+        services.AddScoped<ThemeService>();
+        services.AddScoped<IToastService, ToastService>();
+        
+        // Settings services
+        services.AddScoped<ISettingsService, SettingsService>();
+        services.AddScoped<ISettingsEncryptionService, SettingsEncryptionService>();
+        
+        // Monitoring services
+        services.AddScoped<ISystemMonitoringService, SystemMonitoringService>();
+        services.AddScoped<IDashboardService, DashboardService>();
     }
 
     protected async Task<ApplicationUser> CreateTestUserAsync(string email = "test@example.com", string password = "TestPassword123!", params string[] roles)
