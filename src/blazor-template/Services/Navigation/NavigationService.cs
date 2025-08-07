@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Navigation
 {
     public interface INavigationService
     {

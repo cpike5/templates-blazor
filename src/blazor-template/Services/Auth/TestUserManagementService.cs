@@ -3,7 +3,7 @@ using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Auth
 {
     /// <summary>
     /// Test class to verify UserManagementService functionality

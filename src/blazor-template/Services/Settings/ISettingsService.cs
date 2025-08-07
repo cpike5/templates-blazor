@@ -1,6 +1,6 @@
 using BlazorTemplate.Models.Settings;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Settings
 {
     /// <summary>
     /// Service interface for managing application settings

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Monitoring
 {
     /// <summary>
     /// Background service that periodically collects and stores system health metrics.

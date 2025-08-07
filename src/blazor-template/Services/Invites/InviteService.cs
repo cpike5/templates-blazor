@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Invites
 {
     public interface IInviteService
     {

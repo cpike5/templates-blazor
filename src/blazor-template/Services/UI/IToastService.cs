@@ -1,4 +1,4 @@
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.UI
 {
     /// <summary>
     /// Service for managing toast notifications across the application

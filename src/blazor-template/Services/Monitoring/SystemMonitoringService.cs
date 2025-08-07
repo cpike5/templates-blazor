@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Monitoring
 {
     /// <summary>
     /// Service implementation for system monitoring and health metrics collection.

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Settings
 {
     /// <summary>
     /// Service implementation for encrypting and decrypting sensitive settings

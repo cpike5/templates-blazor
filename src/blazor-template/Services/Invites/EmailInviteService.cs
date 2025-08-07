@@ -2,7 +2,7 @@ using BlazorTemplate.Data;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Invites
 {
     public interface IEmailInviteService
     {

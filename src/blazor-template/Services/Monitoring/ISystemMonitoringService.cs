@@ -1,6 +1,6 @@
 using BlazorTemplate.Models.Dashboard;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Monitoring
 {
     /// <summary>
     /// Service interface for system monitoring and health metrics collection.

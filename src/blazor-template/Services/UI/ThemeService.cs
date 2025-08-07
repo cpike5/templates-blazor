@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services;
+namespace BlazorTemplate.Services.UI;
 
 public class ThemeService
 {

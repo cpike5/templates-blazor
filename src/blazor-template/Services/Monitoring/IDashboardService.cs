@@ -1,6 +1,6 @@
 using BlazorTemplate.Models.Dashboard;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Monitoring
 {
     /// <summary>
     /// Service interface for retrieving dashboard data and system metrics.

@@ -1,4 +1,4 @@
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Settings
 {
     /// <summary>
     /// Service for encrypting and decrypting sensitive settings data
