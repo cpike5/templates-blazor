@@ -26,7 +26,13 @@ namespace BlazorTemplate
             {
                 logger.ReadFrom.Configuration(builder.Configuration)
                     .Enrich.FromLogContext()
-                    .WriteTo.Console();
+                    .WriteTo.Console()
+                    .WriteTo.Logger(lc => lc
+                        .Filter.ByIncludingOnly(le => le.Level >= Serilog.Events.LogEventLevel.Warning)
+                        .WriteTo.File(
+                            path: "logs/warnings-.txt",
+                            rollingInterval: RollingInterval.Day,
+                            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"));
             });
 
             // Configure Site Options
