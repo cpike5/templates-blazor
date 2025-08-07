@@ -7,7 +7,7 @@ using System.Net.Mail;
 using System.Reflection;
 using System.Text.Json;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Settings
 {
     /// <summary>
     /// Service for managing application settings with database persistence, caching, and encryption

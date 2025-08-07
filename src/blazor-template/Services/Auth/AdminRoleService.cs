@@ -3,7 +3,7 @@ using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Auth
 {
     public class AdminRoleService : IAdminRoleService
     {

@@ -1,7 +1,7 @@
 ﻿using BlazorTemplate.Data;
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Setup
 {
     /// <summary>
     /// Service interface for handling first-time application setup operations

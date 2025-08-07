@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.UI
 {
     /// <summary>
     /// Service implementation for managing toast notifications

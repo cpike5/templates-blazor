@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Auth
 {
     /// <summary>
     /// Service interface for managing user role assignments and queries

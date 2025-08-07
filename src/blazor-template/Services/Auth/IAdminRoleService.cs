@@ -2,7 +2,7 @@ using BlazorTemplate.Data;
 using BlazorTemplate.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace BlazorTemplate.Services
+namespace BlazorTemplate.Services.Auth
 {
     public interface IAdminRoleService
     {

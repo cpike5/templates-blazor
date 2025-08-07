@@ -1,6 +1,10 @@
 ﻿using BlazorTemplate.Configuration.Navigation;
 using BlazorTemplate.Data;
-using BlazorTemplate.Services;
+using BlazorTemplate.Services.Auth;
+using BlazorTemplate.Services.Invites;
+using BlazorTemplate.Services.Navigation;
+using BlazorTemplate.Services.Setup;
+using BlazorTemplate.Services.Monitoring;
 
 namespace BlazorTemplate.Extensions
 {
