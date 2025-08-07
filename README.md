@@ -1,6 +1,6 @@
 # Blazor Server Template
 
-A comprehensive Blazor Server template for rapid prototyping with authentication, role-based navigation, invite systems, JWT API, and advanced user management.
+A comprehensive Blazor Server template for rapid prototyping with authentication, role-based navigation, invite systems, and advanced user management.
 
 **GitHub Repository**: https://github.com/cpike5/templates-blazor
 
@@ -12,7 +12,6 @@ A comprehensive Blazor Server template for rapid prototyping with authentication
 - **Dynamic navigation system** from appsettings.json with role filtering
 - **Theme system** with server-side rendering and persistent preferences
 - **Invite-only registration** with codes and email invitations
-- **JWT API** with refresh tokens and standardized responses
 - **User activity tracking** and comprehensive audit logging
 - **Rate limiting** and API security middleware
 - **Google OAuth integration** for external authentication
@@ -218,7 +217,6 @@ Add Google OAuth credentials to `appsettings.json`:
 - **UserRoleService** - Manages user role assignments and queries  
 - **UserManagementService** - Complete user operations and management
 - **ThemeService** - Server-side theme switching with persistence
-- **JwtTokenService** - JWT generation, validation, and refresh token management
 - **InviteService** - Invitation code and email invite generation/validation
 - **AdminRoleService** - Admin-specific role operations
 - **FirstTimeSetupService** - Handles initial application setup and seeding
@@ -270,23 +268,6 @@ The admin user is automatically assigned the Administrator role based on the ema
 }
 ```
 
-## API Endpoints
-
-The template includes a comprehensive REST API with JWT authentication:
-
-### Authentication Endpoints
-- `POST /api/auth/login` - User authentication with JWT response
-- `POST /api/auth/refresh` - Refresh expired access tokens  
-- `POST /api/auth/logout` - User logout with token revocation
-- `GET /api/auth/profile` - Current user profile information
-- `POST /api/auth/revoke` - Revoke refresh tokens
-
-### User Management Endpoints  
-- `GET /api/users` - List users with filtering and pagination
-- `GET /api/users/{id}` - Get specific user details
-- `PUT /api/users/{id}` - Update user information
-- `POST /api/users/{id}/roles` - Assign roles to users
-- `DELETE /api/users/{id}/roles/{role}` - Remove roles from users
 
 ## Documentation
 
@@ -296,7 +277,6 @@ Comprehensive documentation is available in the `/docs` folder:
 - **[002-navigation-service-docs.md](docs/002-navigation-service-docs.md)** - Navigation system configuration
 - **[005-theme-service.md](docs/005-theme-service.md)** - Theme system architecture and usage
 - **[007-invite-system.md](docs/007-invite-system.md)** - Comprehensive invite system guide
-- **[008-jwt-api-system.md](docs/008-jwt-api-system.md)** - JWT API authentication and endpoints
 - **[009-database-architecture.md](docs/009-database-architecture.md)** - Database models and relationships
 - **[010-configuration-guide.md](docs/010-configuration-guide.md)** - Complete configuration reference
 
@@ -319,5 +299,4 @@ Comprehensive documentation is available in the `/docs` folder:
 - Guest user disabled (unless needed for demos)
 - Swagger documentation disabled
 - Rate limiting enabled with appropriate limits
-- Secure JWT signing keys (use Azure Key Vault or similar)
 - Database connection strings secured
