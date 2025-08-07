@@ -80,8 +80,17 @@ namespace BlazorTemplate
             }
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            
+            // Register DbContext for Identity and regular use
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+            
+            // Register DbContextFactory for services that need concurrent access with independent configuration
+            builder.Services.AddSingleton<IDbContextFactory<ApplicationDbContext>>(provider =>
+            {
+                return new ApplicationDbContextFactory(connectionString);
+            });
+            
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)

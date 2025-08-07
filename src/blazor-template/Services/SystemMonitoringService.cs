@@ -12,7 +12,7 @@ namespace BlazorTemplate.Services
     /// </summary>
     public class SystemMonitoringService : ISystemMonitoringService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<SystemMonitoringService> _logger;
         private readonly IConfiguration _configuration;
         private static readonly DateTime _applicationStartTime = DateTime.UtcNow;
@@ -22,15 +22,15 @@ namespace BlazorTemplate.Services
         /// <summary>
         /// Initializes a new instance of the SystemMonitoringService.
         /// </summary>
-        /// <param name="context">The application database context.</param>
+        /// <param name="contextFactory">The database context factory for creating context instances.</param>
         /// <param name="logger">Logger instance for error logging.</param>
         /// <param name="configuration">Application configuration.</param>
         public SystemMonitoringService(
-            ApplicationDbContext context, 
+            IDbContextFactory<ApplicationDbContext> contextFactory, 
             ILogger<SystemMonitoringService> logger,
             IConfiguration configuration)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
             _configuration = configuration;
             
@@ -329,6 +329,8 @@ namespace BlazorTemplate.Services
         {
             try
             {
+                await using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var metric = new SystemHealthMetric
                 {
                     MetricType = metricType,
@@ -336,8 +338,8 @@ namespace BlazorTemplate.Services
                     Timestamp = DateTime.UtcNow
                 };
 
-                _context.SystemHealthMetrics.Add(metric);
-                await _context.SaveChangesAsync();
+                context.SystemHealthMetrics.Add(metric);
+                await context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -355,9 +357,11 @@ namespace BlazorTemplate.Services
         {
             try
             {
+                await using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var cutoffTime = DateTime.UtcNow.AddHours(-hoursBack);
                 
-                var metrics = await _context.SystemHealthMetrics
+                var metrics = await context.SystemHealthMetrics
                     .Where(m => m.MetricType == metricType && m.Timestamp >= cutoffTime)
                     .OrderBy(m => m.Timestamp)
                     .Select(m => new { m.Timestamp, m.MetricValue })
@@ -380,21 +384,23 @@ namespace BlazorTemplate.Services
         {
             try
             {
+                await using var context = await _contextFactory.CreateDbContextAsync();
+                
                 // Try SQL Server specific approach first
                 var connectionString = _configuration.GetConnectionString("DefaultConnection");
                 if (connectionString?.Contains("Server=", StringComparison.OrdinalIgnoreCase) == true)
                 {
                     try
                     {
-                        var result = await _context.Database.ExecuteSqlRawAsync(
+                        var result = await context.Database.ExecuteSqlRawAsync(
                             "SELECT SUM(CAST(FILEPROPERTY(name, 'SpaceUsed') AS bigint) * 8192) FROM sys.database_files");
                         // Note: ExecuteSqlRawAsync doesn't return scalar values, so we'll use a different approach
                         
                         // Alternative approach using DbConnection
-                        using var command = _context.Database.GetDbConnection().CreateCommand();
+                        using var command = context.Database.GetDbConnection().CreateCommand();
                         command.CommandText = "SELECT SUM(CAST(FILEPROPERTY(name, 'SpaceUsed') AS bigint) * 8192) FROM sys.database_files";
                         
-                        await _context.Database.OpenConnectionAsync();
+                        await context.Database.OpenConnectionAsync();
                         var sizeResult = await command.ExecuteScalarAsync();
                         
                         if (sizeResult != null && sizeResult != DBNull.Value)
@@ -417,9 +423,9 @@ namespace BlazorTemplate.Services
                 }
 
                 // Last resort: Use table count estimation
-                var tableCount = await _context.Users.CountAsync() + 
-                               await _context.UserActivities.CountAsync() +
-                               await _context.SystemHealthMetrics.CountAsync();
+                var tableCount = await context.Users.CountAsync() + 
+                               await context.UserActivities.CountAsync() +
+                               await context.SystemHealthMetrics.CountAsync();
                 
                 // Rough estimation: 1KB per record
                 return tableCount * 1024;

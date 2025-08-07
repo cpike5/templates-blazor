@@ -353,7 +353,7 @@ namespace BlazorTemplate.Services
                     IsEncrypted = shouldEncrypt,
                     Category = GetSettingCategory(kvp.Key),
                     LastModified = DateTime.UtcNow,
-                    ModifiedBy = "System"
+                    ModifiedBy = null
                 };
 
                 _context.ApplicationSettings.Add(setting);
