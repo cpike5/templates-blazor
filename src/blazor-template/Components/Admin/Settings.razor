@@ -1,9 +1,16 @@
 ﻿@page "/admin/settings"
 @using BlazorTemplate.Components.Layout
 @using BlazorTemplate.Data
+@using BlazorTemplate.Services
+@using BlazorTemplate.Models.Settings
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 @layout AdminLayout
 @attribute [Authorize(Roles = "Administrator")]
+@rendermode InteractiveServer
+@inject ISettingsService SettingsService
+@inject IToastService ToastService
+@inject ILogger<Settings> Logger
 
 <style>
     .settings-container {
@@ -571,13 +578,27 @@
             <p>Configure system-wide settings, security options, and application preferences.</p>
         </div>
         <div class="settings-actions">
-            <button type="button" class="btn btn-outline-secondary">
-                <i class="fas fa-undo me-1"></i>
+            <button type="button" class="btn btn-outline-secondary" @onclick="ResetSettingsAsync" disabled="@isSaving">
+                @if (isSaving)
+                {
+                    <i class="fas fa-spinner fa-spin me-1"></i>
+                }
+                else
+                {
+                    <i class="fas fa-undo me-1"></i>
+                }
                 Reset to Defaults
             </button>
-            <button type="button" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i>
-                Save Changes
+            <button type="button" class="btn btn-primary" @onclick="SaveSettingsAsync" disabled="@(isSaving || !hasUnsavedChanges)">
+                @if (isSaving)
+                {
+                    <i class="fas fa-spinner fa-spin me-1"></i>
+                }
+                else
+                {
+                    <i class="fas fa-save me-1"></i>
+                }
+                @(isSaving ? "Saving..." : "Save Changes")
             </button>
         </div>
     </div>
@@ -643,31 +664,31 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Site Title</label>
-                            <input type="text" class="form-control" value="Blazor Template Admin" />
+                            <input type="text" class="form-control" @bind="settings.General.SiteTitle" @bind:event="oninput" @onchange="OnInputChanged" disabled="@isLoading" />
                             <div class="form-help">Displayed in browser title and navigation.</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Admin Email</label>
-                            <input type="email" class="form-control" value="admin@test.com" />
+                            <input type="email" class="form-control" @bind="settings.General.AdminEmail" @bind:event="oninput" @onchange="OnInputChanged" disabled="@isLoading" />
                             <div class="form-help">Primary administrator email address.</div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Default Time Zone</label>
-                            <select class="form-control">
-                                <option>UTC</option>
-                                <option selected>America/New_York</option>
-                                <option>America/Los_Angeles</option>
-                                <option>Europe/London</option>
+                            <select class="form-control" @bind="settings.General.DefaultTimeZone" @bind:after="OnInputChanged" disabled="@isLoading">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">America/New_York</option>
+                                <option value="America/Los_Angeles">America/Los_Angeles</option>
+                                <option value="Europe/London">Europe/London</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date Format</label>
-                            <select class="form-control">
-                                <option selected>MM/DD/YYYY</option>
-                                <option>DD/MM/YYYY</option>
-                                <option>YYYY-MM-DD</option>
+                            <select class="form-control" @bind="settings.General.DateFormat" @bind:after="OnInputChanged" disabled="@isLoading">
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                             </select>
                         </div>
                     </div>
@@ -677,21 +698,27 @@
                                 <h6 class="switch-title">Maintenance Mode</h6>
                                 <p class="switch-desc">Put the application in maintenance mode for all non-admin users</p>
                             </div>
-                            <button class="toggle-switch"></button>
+                            <button type="button" class="toggle-switch @(settings.General.MaintenanceMode ? "active" : "")" 
+                                    @onclick="() => { settings.General.MaintenanceMode = !settings.General.MaintenanceMode; OnInputChanged(); }" 
+                                    disabled="@isLoading"></button>
                         </div>
                         <div class="form-switch">
                             <div class="switch-info">
                                 <h6 class="switch-title">User Registration</h6>
                                 <p class="switch-desc">Allow new users to create accounts</p>
                             </div>
-                            <button class="toggle-switch active"></button>
+                            <button type="button" class="toggle-switch @(settings.General.UserRegistration ? "active" : "")" 
+                                    @onclick="() => { settings.General.UserRegistration = !settings.General.UserRegistration; OnInputChanged(); }" 
+                                    disabled="@isLoading"></button>
                         </div>
                         <div class="form-switch">
                             <div class="switch-info">
                                 <h6 class="switch-title">Guest Access</h6>
                                 <p class="switch-desc">Enable guest user functionality for demos</p>
                             </div>
-                            <button class="toggle-switch"></button>
+                            <button type="button" class="toggle-switch @(settings.General.GuestAccess ? "active" : "")" 
+                                    @onclick="() => { settings.General.GuestAccess = !settings.General.GuestAccess; OnInputChanged(); }" 
+                                    disabled="@isLoading"></button>
                         </div>
                     </div>
                 </div>
@@ -759,16 +786,24 @@
                 </div>
                 <div class="section-body">
                     <div class="form-group">
-                        <label class="form-label">Color Scheme</label>
-                        <div class="color-picker-grid">
-                            <div class="color-option primary selected"></div>
-                            <div class="color-option blue"></div>
-                            <div class="color-option green"></div>
-                            <div class="color-option red"></div>
-                            <div class="color-option orange"></div>
-                            <div class="color-option purple"></div>
-                        </div>
-                        <div class="form-help">Choose the primary color scheme for the application.</div>
+                        <label class="form-label">Theme</label>
+                        <select class="form-control" @bind="settings.Appearance.ColorScheme" @bind:after="OnInputChanged" disabled="@isLoading">
+                            <option value="default">Professional Neutral</option>
+                            <option value="financial-blue">Corporate Finance</option>
+                            <option value="tech-slate">Modern Tech</option>
+                            <option value="medical-teal">Healthcare Professional</option>
+                            <option value="executive-charcoal">Executive Consulting</option>
+                            <option value="executive-purple">Executive Purple</option>
+                            <option value="sunset-rose">Sunset Rose</option>
+                            <option value="trust-blue">Trust Blue</option>
+                            <option value="growth-green">Growth Green</option>
+                            <option value="innovation-orange">Innovation Orange</option>
+                            <option value="midnight-teal">Midnight Teal</option>
+                            <option value="heritage-burgundy">Heritage Burgundy</option>
+                            <option value="platinum-gray">Platinum Gray</option>
+                            <option value="deep-navy">Deep Navy</option>
+                        </select>
+                        <div class="form-help">Choose the default theme for the application.</div>
                     </div>
                     <div class="form-group">
                         <div class="form-switch">
@@ -776,14 +811,18 @@
                                 <h6 class="switch-title">Dark Mode</h6>
                                 <p class="switch-desc">Enable dark theme for better visibility in low light</p>
                             </div>
-                            <button class="toggle-switch"></button>
+                            <button class='toggle-switch @(settings.Appearance.DarkMode ? "active" : "")' 
+                                    @onclick="() => { settings.Appearance.DarkMode = !settings.Appearance.DarkMode; OnInputChanged(); }" 
+                                    disabled="@isLoading"></button>
                         </div>
                         <div class="form-switch">
                             <div class="switch-info">
                                 <h6 class="switch-title">Compact Layout</h6>
                                 <p class="switch-desc">Reduce spacing and padding for more content density</p>
                             </div>
-                            <button class="toggle-switch"></button>
+                            <button class="toggle-switch @(settings.Appearance.CompactLayout ? "active" : "")" 
+                                    @onclick="() => { settings.Appearance.CompactLayout = !settings.Appearance.CompactLayout; OnInputChanged(); }" 
+                                    disabled="@isLoading"></button>
                         </div>
                     </div>
                 </div>
@@ -988,5 +1027,153 @@
 </div>
 
 @code {
-    // Mock data and settings logic will go here later
+    private ApplicationSettings settings = new();
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool hasUnsavedChanges = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadSettingsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading settings");
+            ToastService.ShowError("Error", "Failed to load settings. Please refresh the page.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        settings = await SettingsService.GetSettingsAsync();
+        hasUnsavedChanges = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        if (isSaving) return;
+        
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var userId = await GetCurrentUserIdAsync();
+            var success = await SettingsService.SaveSettingsAsync(settings, userId);
+
+            if (success)
+            {
+                hasUnsavedChanges = false;
+                ToastService.ShowSuccess("Settings Saved", "Your settings have been saved successfully.");
+            }
+            else
+            {
+                ToastService.ShowError("Save Failed", "Failed to save settings. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving settings");
+            ToastService.ShowError("Error", "An error occurred while saving settings.");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ResetSettingsAsync()
+    {
+        if (isSaving) return;
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var userId = await GetCurrentUserIdAsync();
+            var success = await SettingsService.ResetSettingsAsync(userId);
+
+            if (success)
+            {
+                await LoadSettingsAsync();
+                ToastService.ShowSuccess("Settings Reset", "Settings have been reset to default values.");
+            }
+            else
+            {
+                ToastService.ShowError("Reset Failed", "Failed to reset settings. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error resetting settings");
+            ToastService.ShowError("Error", "An error occurred while resetting settings.");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        if (authenticationStateTask == null) return null;
+        
+        var authState = await authenticationStateTask;
+        return authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    private void OnInputChanged()
+    {
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private async Task TestEmailSettingsAsync()
+    {
+        if (isSaving) return;
+
+        var userId = await GetCurrentUserIdAsync();
+        if (string.IsNullOrEmpty(userId)) return;
+
+        try
+        {
+            var testEmail = settings.General.AdminEmail;
+            if (string.IsNullOrEmpty(testEmail))
+            {
+                ToastService.ShowWarning("Email Required", "Please enter an admin email address first.");
+                return;
+            }
+
+            ToastService.ShowInfo("Testing Email", "Sending test email...");
+            
+            var success = await SettingsService.TestEmailSettingsAsync(settings.Email, testEmail);
+            
+            if (success)
+            {
+                ToastService.ShowSuccess("Email Test Successful", "Test email sent successfully!");
+            }
+            else
+            {
+                ToastService.ShowError("Email Test Failed", "Failed to send test email. Please check your settings.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error testing email settings");
+            ToastService.ShowError("Error", "An error occurred while testing email settings.");
+        }
+    }
 }
