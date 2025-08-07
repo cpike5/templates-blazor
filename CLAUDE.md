@@ -36,14 +36,14 @@ dotnet ef migrations remove
 
 ### Build and Test
 ```bash
-# Build the solution
-dotnet build
+# Build the solution (from root directory)
+dotnet build src/templates-blazor.sln
 
 # Build for release
-dotnet build --configuration Release
+dotnet build src/templates-blazor.sln --configuration Release
 
 # Clean build artifacts
-dotnet clean
+dotnet clean src/templates-blazor.sln
 ```
 
 ## Architecture Overview
