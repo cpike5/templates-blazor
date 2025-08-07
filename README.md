@@ -273,12 +273,13 @@ The admin user is automatically assigned the Administrator role based on the ema
 
 Comprehensive documentation is available in the `/docs` folder:
 
-- **[000-quickstart-reference.md](docs/000-quickstart-reference.md)** - Quick start guide and overview
-- **[002-navigation-service-docs.md](docs/002-navigation-service-docs.md)** - Navigation system configuration
-- **[005-theme-service.md](docs/005-theme-service.md)** - Theme system architecture and usage
-- **[007-invite-system.md](docs/007-invite-system.md)** - Comprehensive invite system guide
-- **[009-database-architecture.md](docs/009-database-architecture.md)** - Database models and relationships
-- **[010-configuration-guide.md](docs/010-configuration-guide.md)** - Complete configuration reference
+- **[001-quickstart-reference.md](docs/001-quickstart-reference.md)** - Quick start guide and overview
+- **[002-setup-guide.md](docs/002-setup-guide.md)** - Complete setup instructions
+- **[003-configuration-guide.md](docs/003-configuration-guide.md)** - Complete configuration reference
+- **[010-database-architecture.md](docs/010-database-architecture.md)** - Database models and relationships
+- **[012-navigation-service.md](docs/012-navigation-service.md)** - Navigation system configuration
+- **[013-theme-service.md](docs/013-theme-service.md)** - Theme system architecture and usage
+- **[020-invite-system.md](docs/020-invite-system.md)** - Comprehensive invite system guide
 
 ## Development vs Production
 
