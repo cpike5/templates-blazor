@@ -1,0 +1,425 @@
+@page "/media"
+@using BlazorTemplate.Data
+@using BlazorTemplate.Services.Media
+@using BlazorTemplate.Extensions
+@using BlazorTemplate.Models.Media
+@using Microsoft.AspNetCore.Authorization
+@inject IMediaManagementService MediaService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<Media> Logger
+@inject IJSRuntime JS
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Media Management</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-images me-2"></i>Media Management
+                </h1>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary @(viewMode == "upload" ? "active" : "")" 
+                            @onclick="@(() => SetViewMode("upload"))"
+                            data-bs-toggle="tooltip" 
+                            title="Upload new files to your media library">
+                        <i class="fas fa-cloud-upload-alt me-1"></i> Upload
+                    </button>
+                    <button type="button" class="btn btn-outline-primary @(viewMode == "files" ? "active" : "")" 
+                            @onclick="@(() => SetViewMode("files"))"
+                            data-bs-toggle="tooltip" 
+                            title="View and manage your uploaded files">
+                        <i class="fas fa-folder-open me-1"></i> My Files
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (viewMode == "upload")
+    {
+        <div class="row">
+            <div class="col-12 col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>Upload Files
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">File Category</label>
+                            <select class="form-select" @bind="selectedCategory">
+                                @foreach (var category in Enum.GetValues<MediaFileCategory>())
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </select>
+                        </div>
+
+                        <FileUploadComponent Category="@selectedCategory" 
+                                           AllowMultiple="true"
+                                           OnFilesUploaded="HandleFilesUploaded"
+                                           OnError="HandleUploadError" />
+                    </div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(uploadMessage))
+                {
+                    <div class="alert alert-@(uploadSuccess ? "success" : "danger") alert-dismissible mt-3" role="alert">
+                        @uploadMessage
+                        <button type="button" class="btn-close" aria-label="Close" @onclick="ClearMessage"></button>
+                    </div>
+                }
+            </div>
+
+            <div class="col-12 col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Upload Guidelines
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success me-2"></i>Maximum file size: 100MB</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Supported formats:</li>
+                            <ul class="ms-3">
+                                <li>Images: JPG, PNG, GIF, WebP</li>
+                                <li>Documents: PDF, TXT</li>
+                                <li>Archives: ZIP</li>
+                            </ul>
+                            <li><i class="fas fa-shield-alt text-primary me-2"></i>Files are private by default</li>
+                            <li><i class="fas fa-fingerprint text-info me-2"></i>Duplicate detection enabled</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (viewMode == "files")
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-folder-open me-2"></i>My Files
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" style="width: auto;" @onchange="HandleCategoryFilter">
+                                    <option value="">All Categories</option>
+                                    @foreach (var category in Enum.GetValues<MediaFileCategory>())
+                                    {
+                                        <option value="@category">@category</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="RefreshFiles">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (isLoadingFiles)
+                        {
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading files...</span>
+                                </div>
+                                <div class="mt-2">Loading your files...</div>
+                            </div>
+                        }
+                        else if (!userFiles.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                <h5>No files found</h5>
+                                <p class="text-muted">Upload some files to get started.</p>
+                                <button class="btn btn-primary" @onclick="@(() => SetViewMode("upload"))">
+                                    <i class="fas fa-cloud-upload-alt me-1"></i> Upload Files
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                @foreach (var file in userFiles)
+                                {
+                                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3">
+                                        <div class="card file-card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div class="file-icon">
+                                                        <i class="@GetFileIcon(file.ContentType) fa-2x text-primary"></i>
+                                                    </div>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                            <i class="fas fa-ellipsis-v"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a class="dropdown-item" href="/media/@file.Id" target="_blank">
+                                                                <i class="fas fa-external-link-alt me-2"></i>View
+                                                            </a></li>
+                                                            <li><a class="dropdown-item" href="/media/@file.Id/download">
+                                                                <i class="fas fa-download me-2"></i>Download
+                                                            </a></li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li><button class="dropdown-item text-danger" @onclick="() => DeleteFile(file)">
+                                                                <i class="fas fa-trash me-2"></i>Delete
+                                                            </button></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <h6 class="card-title text-truncate" title="@file.FileName">@file.FileName</h6>
+                                                <div class="small text-muted">
+                                                    <div>@file.Category</div>
+                                                    <div>@FormatFileSize(file.FileSize)</div>
+                                                    <div>@file.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (hasMoreFiles)
+                            {
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-primary" @onclick="LoadMoreFiles" disabled="@isLoadingMore">
+                                        @if (isLoadingMore)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            <span>Loading...</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-chevron-down me-1"></i>
+                                            <span>Load More</span>
+                                        }
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string viewMode = "upload";
+    private MediaFileCategory selectedCategory = MediaFileCategory.Document;
+    private MediaFileCategory? filterCategory = null;
+    private List<MediaFile> userFiles = new();
+    private bool isLoadingFiles = false;
+    private bool isLoadingMore = false;
+    private bool hasMoreFiles = false;
+    private int currentPage = 1;
+    private const int PageSize = 12;
+    
+    private string? uploadMessage;
+    private bool uploadSuccess;
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.GetUserId();
+        
+        if (viewMode == "files")
+        {
+            await LoadFiles();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initTooltips");
+        }
+    }
+
+    private void SetViewMode(string mode)
+    {
+        viewMode = mode;
+        if (mode == "files" && !userFiles.Any())
+        {
+            _ = Task.Run(async () => await LoadFiles());
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandleFilesUploaded(List<MediaFile> files)
+    {
+        uploadSuccess = true;
+        uploadMessage = $"Successfully uploaded {files.Count} file(s).";
+        StateHasChanged();
+
+        // If we're viewing files, refresh the list
+        if (viewMode == "files")
+        {
+            await LoadFiles();
+        }
+    }
+
+    private async Task HandleUploadError(string error)
+    {
+        uploadSuccess = false;
+        uploadMessage = error;
+        StateHasChanged();
+    }
+
+    private void ClearMessage()
+    {
+        uploadMessage = null;
+        StateHasChanged();
+    }
+
+    private async Task LoadFiles(bool append = false)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+            return;
+
+        if (!append)
+        {
+            isLoadingFiles = true;
+            currentPage = 1;
+            userFiles.Clear();
+        }
+        else
+        {
+            isLoadingMore = true;
+        }
+
+        StateHasChanged();
+
+        try
+        {
+            var result = await MediaService.GetUserFilesAsync(currentUserId, filterCategory, currentPage, PageSize);
+            
+            if (append)
+            {
+                userFiles.AddRange(result.Items);
+            }
+            else
+            {
+                userFiles = result.Items.ToList();
+            }
+
+            hasMoreFiles = currentPage < result.TotalPages;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading user files");
+            uploadSuccess = false;
+            uploadMessage = "Error loading files. Please try again.";
+        }
+        finally
+        {
+            isLoadingFiles = false;
+            isLoadingMore = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMoreFiles()
+    {
+        currentPage++;
+        await LoadFiles(append: true);
+    }
+
+    private async Task RefreshFiles()
+    {
+        await LoadFiles();
+    }
+
+    private async Task HandleCategoryFilter(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        filterCategory = string.IsNullOrEmpty(value) ? null : Enum.Parse<MediaFileCategory>(value);
+        await LoadFiles();
+    }
+
+    private async Task DeleteFile(MediaFile file)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+            return;
+
+        try
+        {
+            var success = await MediaService.DeleteFileAsync(file.Id, currentUserId);
+            if (success)
+            {
+                userFiles.Remove(file);
+                uploadSuccess = true;
+                uploadMessage = "File deleted successfully.";
+                StateHasChanged();
+            }
+            else
+            {
+                uploadSuccess = false;
+                uploadMessage = "Failed to delete file.";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error deleting file {FileId}", file.Id);
+            uploadSuccess = false;
+            uploadMessage = "Error deleting file. Please try again.";
+            StateHasChanged();
+        }
+    }
+
+    private string GetFileIcon(string contentType)
+    {
+        return contentType.ToLower() switch
+        {
+            var ct when ct.StartsWith("image/") => "fas fa-file-image",
+            "application/pdf" => "fas fa-file-pdf",
+            var ct when ct.StartsWith("text/") => "fas fa-file-alt",
+            "application/zip" => "fas fa-file-archive",
+            var ct when ct.StartsWith("video/") => "fas fa-file-video",
+            var ct when ct.StartsWith("audio/") => "fas fa-file-audio",
+            _ => "fas fa-file"
+        };
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        double size = bytes;
+        
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size = size / 1024;
+        }
+        
+        return $"{size:0.##} {sizes[order]}";
+    }
+}
+
+<style>
+.file-card {
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.file-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.file-icon {
+    width: 40px;
+    text-align: center;
+}
+</style>

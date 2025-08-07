@@ -1,0 +1,419 @@
+@rendermode InteractiveServer
+@using BlazorTemplate.Data
+@using BlazorTemplate.Services.Media
+@using BlazorTemplate.Extensions
+@using BlazorTemplate.Models.Media
+@inject IMediaManagementService MediaService
+@inject ILogger<FileUploadComponent> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
+
+<div class="file-upload-container">
+    <div class="drop-zone @(isDragging ? "drag-over" : "") @(isDragOver ? "drag-active" : "")" 
+         @ondragenter="HandleDragEnter" 
+         @ondragenter:preventDefault="true"
+         @ondragleave="HandleDragLeave" 
+         @ondragover="HandleDragOver"
+         @ondragover:preventDefault="true"
+         @ondrop="HandleDrop"
+         @ondrop:preventDefault="true"
+         @onclick="TriggerFileSelect">
+        
+        <div class="upload-content">
+            <div class="upload-animation @(isDragOver ? "bounce" : "")">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            </div>
+            <h4 class="upload-title">@(isDragOver ? "Drop files here!" : "Drop files here or click to browse")</h4>
+            <p class="upload-subtitle">Supported formats: @string.Join(", ", AllowedExtensions)</p>
+            <p class="upload-subtitle">Maximum file size: @FormatFileSize(MaxFileSize)</p>
+            
+            <InputFile @ref="fileInput"
+                      OnChange="HandleFileSelection" 
+                      multiple="@AllowMultiple" 
+                      accept="@string.Join(",", AllowedExtensions)"
+                      style="display: none;" />
+            
+            <div class="upload-buttons mt-3">
+                <button type="button" class="btn btn-primary btn-lg" @onclick="TriggerFileSelect" @onclick:stopPropagation="true">
+                    <i class="fas fa-folder-open me-2"></i>Choose Files
+                </button>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Click anywhere in this area or use the button above
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (uploadQueue.Any())
+    {
+        <div class="upload-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Upload Progress</h5>
+                @if (uploadQueue.Any(u => u.HasError))
+                {
+                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="ClearErrors">
+                        <i class="fas fa-times"></i> Clear Errors
+                    </button>
+                }
+            </div>
+            
+            @foreach (var upload in uploadQueue)
+            {
+                <div class="progress-item mb-3">
+                    <div class="progress-header d-flex justify-content-between align-items-center">
+                        <span class="file-name fw-semibold">@upload.FileName</span>
+                        <span class="file-size text-muted small">@FormatFileSize(upload.FileSize)</span>
+                    </div>
+                    
+                    @if (!upload.IsComplete && !upload.HasError)
+                    {
+                        <div class="progress mt-1">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: @(upload.Progress)%" 
+                                 aria-valuenow="@upload.Progress" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    }
+                    
+                    <div class="progress-status mt-1">
+                        @if (upload.IsComplete)
+                        {
+                            <span class="text-success small">
+                                <i class="fas fa-check-circle"></i> Upload complete
+                            </span>
+                        }
+                        else if (upload.HasError)
+                        {
+                            <span class="text-danger small">
+                                <i class="fas fa-exclamation-triangle"></i> @upload.ErrorMessage
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-info small">
+                                <i class="fas fa-spinner fa-spin"></i> @upload.Status
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public MediaFileCategory Category { get; set; } = MediaFileCategory.Document;
+    [Parameter] public bool AllowMultiple { get; set; } = true;
+    [Parameter] public long MaxFileSize { get; set; } = 104857600; // 100MB
+    [Parameter] public string[] AllowedExtensions { get; set; } = { ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".txt", ".zip" };
+    [Parameter] public EventCallback<List<MediaFile>> OnFilesUploaded { get; set; }
+    [Parameter] public EventCallback<string> OnError { get; set; }
+
+    private bool isDragging = false;
+    private bool isDragOver = false;
+    private List<FileUpload> uploadQueue = new();
+    private string? currentUserId;
+    private InputFile? fileInput;
+
+    private class FileUpload
+    {
+        public string FileName { get; set; } = string.Empty;
+        public long FileSize { get; set; }
+        public int Progress { get; set; }
+        public string Status { get; set; } = "Preparing...";
+        public bool IsComplete { get; set; }
+        public bool HasError { get; set; }
+        public string? ErrorMessage { get; set; }
+        public MediaFile? Result { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user ID
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.GetUserId();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize drag and drop events with better handling
+            await JS.InvokeVoidAsync("fileUploadInit", DotNetObjectReference.Create(this));
+        }
+    }
+
+    private void HandleDragEnter()
+    {
+        isDragging = true;
+        isDragOver = true;
+        StateHasChanged();
+    }
+
+    private void HandleDragLeave()
+    {
+        isDragging = false;
+        isDragOver = false;
+        StateHasChanged();
+    }
+
+    private void HandleDragOver()
+    {
+        isDragOver = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        isDragging = false;
+        isDragOver = false;
+        StateHasChanged();
+        
+        // The actual files will be handled through the InputFile OnChange event
+        // when the drop is processed by the browser
+    }
+
+    private async Task TriggerFileSelect()
+    {
+        if (fileInput != null)
+        {
+            await JS.InvokeVoidAsync("triggerFileInput", fileInput.Element);
+        }
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            await OnError.InvokeAsync("You must be logged in to upload files.");
+            return;
+        }
+
+        var files = e.GetMultipleFiles(AllowMultiple ? 10 : 1);
+        var uploadedFiles = new List<MediaFile>();
+
+        foreach (var file in files)
+        {
+            var upload = new FileUpload
+            {
+                FileName = file.Name,
+                FileSize = file.Size,
+                Progress = 0,
+                Status = "Validating..."
+            };
+            
+            uploadQueue.Add(upload);
+            StateHasChanged();
+
+            try
+            {
+                // Client-side validation
+                if (file.Size > MaxFileSize)
+                {
+                    upload.HasError = true;
+                    upload.ErrorMessage = $"File size exceeds maximum of {FormatFileSize(MaxFileSize)}";
+                    StateHasChanged();
+                    continue;
+                }
+
+                if (file.Size == 0)
+                {
+                    upload.HasError = true;
+                    upload.ErrorMessage = "File is empty";
+                    StateHasChanged();
+                    continue;
+                }
+
+                var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                if (!AllowedExtensions.Contains(extension))
+                {
+                    upload.HasError = true;
+                    upload.ErrorMessage = $"File type not allowed. Allowed types: {string.Join(", ", AllowedExtensions)}";
+                    StateHasChanged();
+                    continue;
+                }
+
+                upload.Status = "Uploading...";
+                upload.Progress = 25;
+                StateHasChanged();
+
+                // Upload file
+                var result = await MediaService.UploadFileAsync(file, currentUserId, Category);
+                
+                upload.Progress = 100;
+                upload.IsComplete = true;
+                upload.Status = "Complete";
+                upload.Result = result;
+                
+                uploadedFiles.Add(result);
+                StateHasChanged();
+
+                Logger.LogInformation("File {FileName} uploaded successfully with ID {FileId}", file.Name, result.Id);
+            }
+            catch (FileValidationException ex)
+            {
+                upload.HasError = true;
+                upload.ErrorMessage = ex.Message;
+                Logger.LogWarning(ex, "File validation failed for {FileName}", file.Name);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                upload.HasError = true;
+                upload.ErrorMessage = "Upload failed. Please try again.";
+                Logger.LogError(ex, "Error uploading file {FileName}", file.Name);
+                StateHasChanged();
+            }
+        }
+
+        if (uploadedFiles.Any())
+        {
+            await OnFilesUploaded.InvokeAsync(uploadedFiles);
+        }
+    }
+
+    private void ClearErrors()
+    {
+        uploadQueue.RemoveAll(u => u.HasError);
+        StateHasChanged();
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        double size = bytes;
+        
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size = size / 1024;
+        }
+        
+        return $"{size:0.##} {sizes[order]}";
+    }
+}
+
+<style>
+.file-upload-container {
+    margin: 1rem 0;
+}
+
+.drop-zone {
+    border: 3px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop-zone:hover {
+    border-color: var(--bs-primary);
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+}
+
+.drop-zone.drag-over {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(40,167,69,0.3);
+}
+
+.drop-zone.drag-active {
+    border-style: solid;
+    animation: pulse 1s infinite;
+}
+
+.upload-animation {
+    transition: transform 0.3s ease;
+}
+
+.upload-animation.bounce {
+    transform: scale(1.1);
+    animation: bounce 0.6s ease-in-out;
+}
+
+.upload-icon {
+    font-size: 4rem;
+    color: var(--bs-primary);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.drop-zone:hover .upload-icon {
+    color: var(--bs-primary);
+    transform: scale(1.1);
+}
+
+.drop-zone.drag-over .upload-icon {
+    color: #28a745;
+    transform: scale(1.2);
+}
+
+.upload-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.drop-zone.drag-over .upload-title {
+    color: #28a745;
+}
+
+.upload-subtitle {
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.upload-buttons {
+    margin-top: 1rem;
+}
+
+/* Animations moved to app.css to avoid scoped CSS issues */
+
+.upload-progress {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--bs-border-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.progress-item {
+    padding: 0.75rem;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid var(--bs-border-color-translucent);
+}
+
+.file-name {
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.progress-status {
+    font-size: 0.8rem;
+}
+
+.progress {
+    height: 4px;
+}
+</style>

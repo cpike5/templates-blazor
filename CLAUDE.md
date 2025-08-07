@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Blazor Server template for rapid prototyping with ASP.NET Core Identity, role-based access control, and configurable navigation. Built on .NET 8 with Entity Framework Core and SQL Server.
+This is a Blazor Server template for rapid prototyping with ASP.NET Core Identity, role-based access control, configurable navigation, and file management capabilities. Built on .NET 8 with Entity Framework Core and SQL Server.
 
 **GitHub Repository**: https://github.com/cpike5/templates-blazor
 
@@ -58,6 +58,9 @@ dotnet clean src/templates-blazor.sln
 - **AdminRoleService**: Admin-specific role operations and management
 - **FirstTimeSetupService**: Handles initial application setup and database seeding
 - **DataSeeder**: Seeds database with roles and admin user assignments
+- **MediaManagementService**: File upload, storage, and management with access control
+- **FileSecurityService**: File validation, security scanning, and access authorization
+- **LocalFileStorageService**: Local disk-based file storage with organized folder structure
 
 ### Configuration System
 Configuration is centralized through `ConfigurationOptions` (src/blazor-template/Configuration/ConfigurationOptions.cs):
@@ -67,6 +70,7 @@ Configuration is centralized through `ConfigurationOptions` (src/blazor-template
 - JWT token configuration (signing keys, expiration, issuer/audience)
 - API configuration (CORS, rate limiting, Swagger)
 - Invite system configuration (expiration times, quotas)
+- File management configuration (storage paths, security policies, upload limits)
 
 ### Authentication & Authorization
 - ASP.NET Core Identity with Entity Framework stores
@@ -120,6 +124,8 @@ The `ApplicationDbContext` (src/blazor-template/Data/ApplicationDbContext.cs) ex
 - InviteCode - Short-form invitation codes for registration
 - EmailInvite - Email-based invitation system
 - RefreshToken - JWT refresh token storage and management
+- MediaFile - File metadata, storage information, and access control
+- MediaFileAccess - Granular file access permissions and tracking
 - Comprehensive indexing for performance optimization
 - Database seeding through DataSeeder
 
@@ -239,11 +245,17 @@ Be direct and concise. Avoid filler words like "comprehensive", "extensive", or 
   - `JwtTokenService.cs` - JWT token handling
   - `ThemeService.cs` - Theme switching
   - `*InviteService.cs` - Invitation system
+  - `Media/` - File management services
+    - `MediaManagementService.cs` - File operations and metadata
+    - `FileSecurityService.cs` - Security validation and access control
+    - `LocalFileStorageService.cs` - Local storage implementation
 
 **Data & Database:**
 - `Data/` - Entity Framework context and models
   - `ApplicationDbContext.cs` - Main EF context
   - `ApplicationUser.cs` - User entity
+  - `MediaFile.cs` - File metadata entity
+  - `MediaFileAccess.cs` - File access permissions entity
   - `Migrations/` - Database migrations
   - `DataSeeder.cs` - Database seeding
 
@@ -258,6 +270,7 @@ Be direct and concise. Avoid filler words like "comprehensive", "extensive", or 
 - `Controllers/` - Web API controllers
   - `UsersController.cs` - User management API
   - `AuthController.cs` - JWT authentication endpoints (login, refresh, profile)
+  - `MediaController.cs` - Secure file serving and access control
   - `ApiControllerBase.cs` - Base controller with standardized responses
 - `DTO/` - Data transfer objects for API requests and responses
 - `Authorization/` - Custom auth policies and API authorization
@@ -279,6 +292,7 @@ Be direct and concise. Avoid filler words like "comprehensive", "extensive", or 
 - **Styling/themes**: Check `Services/ThemeService.cs`, `wwwroot/*.css`, or `Components/Shared/ThemeSwitcher.razor`
 - **Database issues**: Look in `Data/` folder, especially `ApplicationDbContext.cs`
 - **Configuration problems**: Check `Configuration/ConfigurationOptions.cs` or `appsettings.json`
+- **File management**: Check `Services/Media/`, `Data/MediaFile.cs`, or `Controllers/MediaController.cs`
 
 ## Working Directory
 The main project is located in `src/blazor-template/` - most dotnet commands should be run from this directory.
@@ -312,6 +326,16 @@ The main project is located in `src/blazor-template/` - most dotnet commands sho
 - **Multiple Themes**: Professional color schemes with dark mode
 - **Page Refresh Strategy**: Reliable theme consistency
 - **Documentation**: See `docs/013-theme-service.md`
+
+### File Management & Media System
+- **Secure File Upload**: Multiple file support with drag-and-drop interface
+- **Access Control**: Private, public, and role-based file sharing
+- **Storage Management**: Local file storage with organized folder structure
+- **File Validation**: MIME type checking, size limits, and security scanning
+- **Metadata Management**: Titles, descriptions, tags, and categorization
+- **Thumbnail Generation**: Automatic thumbnail creation for image files
+- **Deduplication**: SHA-256 hash-based duplicate file detection
+- **Documentation**: See `docs/026-file-management-system.md`
 
 ## Updates and Memories
 - Use single quotes instead of escaping because the compiler doesn't like escaped quotes

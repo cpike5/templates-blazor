@@ -2,7 +2,7 @@
 
 ## Overview
 
-The database architecture extends ASP.NET Core Identity with additional entities for invite systems, JWT token management, user activity tracking, and theme preferences. Built on Entity Framework Core with SQL Server, featuring comprehensive indexing and relationship configurations.
+The database architecture extends ASP.NET Core Identity with additional entities for invite systems, JWT token management, user activity tracking, file management, and theme preferences. Built on Entity Framework Core with SQL Server, featuring comprehensive indexing and relationship configurations.
 
 ## Core Entities
 
@@ -123,6 +123,91 @@ public class RefreshToken
 }
 ```
 
+### MediaFile (`Data/MediaFile.cs`)
+
+Stores metadata and storage information for uploaded files.
+
+```csharp
+public class MediaFile
+{
+    public int Id { get; set; }
+    public string FileName { get; set; }          // Original filename
+    public string StoredFileName { get; set; }    // Internal UUID-based name
+    public string ContentType { get; set; }       // MIME type
+    public long FileSize { get; set; }            // Size in bytes
+    public string FileHash { get; set; }          // SHA-256 hash
+    public string StorageProvider { get; set; }   // "Local", "Azure", "S3"
+    public string StoragePath { get; set; }       // Relative path
+    public string? StorageContainer { get; set; } // Container/bucket name
+    
+    // Metadata
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public string? TagsJson { get; set; }         // JSON array of tags
+    
+    // Classification
+    public MediaFileCategory Category { get; set; }
+    public MediaFileVisibility Visibility { get; set; }
+    public MediaProcessingStatus ProcessingStatus { get; set; }
+    
+    // Media Properties
+    public int? ImageWidth { get; set; }
+    public int? ImageHeight { get; set; }
+    public TimeSpan? Duration { get; set; }
+    public bool HasThumbnail { get; set; }
+    public string? ThumbnailPath { get; set; }
+    public string? ThumbnailSizes { get; set; }
+    
+    // Access & Tracking
+    public string UploadedByUserId { get; set; }
+    public string? SharedWithRoles { get; set; }   // JSON array of roles
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastModifiedAt { get; set; }
+    public DateTime? LastAccessedAt { get; set; }
+    public int AccessCount { get; set; }
+    
+    // Navigation property
+    public ApplicationUser UploadedBy { get; set; }
+}
+```
+
+**Features:**
+- Complete file metadata storage
+- SHA-256 hashing for deduplication
+- Role-based access control through JSON arrays
+- Media-specific properties (dimensions, duration)
+- Thumbnail management and processing status
+- Access tracking and audit trail
+
+### MediaFileAccess (`Data/MediaFileAccess.cs`)
+
+Tracks granular file access permissions and user access history.
+
+```csharp
+public class MediaFileAccess
+{
+    public int Id { get; set; }
+    public int MediaFileId { get; set; }
+    public string UserId { get; set; }
+    public string? RoleName { get; set; }
+    public MediaAccessLevel AccessLevel { get; set; }
+    public DateTime GrantedAt { get; set; }
+    public string GrantedByUserId { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    
+    // Navigation properties
+    public MediaFile MediaFile { get; set; }
+    public ApplicationUser User { get; set; }
+    public ApplicationUser GrantedByUser { get; set; }
+}
+```
+
+**Use Cases:**
+- Granular permission management
+- Time-limited access grants
+- Access audit trails
+- Role-based file sharing
+
 ## ApplicationDbContext (`Data/ApplicationDbContext.cs`)
 
 The main Entity Framework context extending `IdentityDbContext`.
@@ -134,6 +219,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<InviteCode> InviteCodes { get; set; }
     public DbSet<EmailInvite> EmailInvites { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<MediaFile> MediaFiles { get; set; }
+    public DbSet<MediaFileAccess> MediaFileAccess { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -242,6 +329,74 @@ builder.Entity<RefreshToken>(entity =>
 });
 ```
 
+### MediaFile Configuration
+
+```csharp
+builder.Entity<MediaFile>(entity =>
+{
+    // Indexes for query performance
+    entity.HasIndex(e => e.UploadedByUserId);
+    entity.HasIndex(e => e.Category);
+    entity.HasIndex(e => e.Visibility);
+    entity.HasIndex(e => e.ProcessingStatus);
+    entity.HasIndex(e => e.ContentType);
+    entity.HasIndex(e => e.FileHash);
+    entity.HasIndex(e => e.CreatedAt);
+    entity.HasIndex(e => new { e.UploadedByUserId, e.CreatedAt });
+    entity.HasIndex(e => new { e.Visibility, e.Category });
+    
+    // String length constraints
+    entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+    entity.Property(e => e.StoredFileName).HasMaxLength(255).IsRequired();
+    entity.Property(e => e.ContentType).HasMaxLength(100).IsRequired();
+    entity.Property(e => e.FileHash).HasMaxLength(64).IsRequired();
+    entity.Property(e => e.StorageProvider).HasMaxLength(50).IsRequired();
+    entity.Property(e => e.StoragePath).HasMaxLength(500).IsRequired();
+    entity.Property(e => e.StorageContainer).HasMaxLength(100);
+    entity.Property(e => e.Title).HasMaxLength(200);
+    entity.Property(e => e.Description).HasMaxLength(1000);
+    entity.Property(e => e.ThumbnailPath).HasMaxLength(500);
+    
+    // Foreign key relationship
+    entity.HasOne(e => e.UploadedBy)
+        .WithMany()
+        .HasForeignKey(e => e.UploadedByUserId)
+        .OnDelete(DeleteBehavior.Restrict);
+});
+```
+
+### MediaFileAccess Configuration
+
+```csharp
+builder.Entity<MediaFileAccess>(entity =>
+{
+    // Indexes for access control queries
+    entity.HasIndex(e => e.MediaFileId);
+    entity.HasIndex(e => e.UserId);
+    entity.HasIndex(e => e.RoleName);
+    entity.HasIndex(e => e.ExpiresAt);
+    entity.HasIndex(e => new { e.MediaFileId, e.UserId });
+    entity.HasIndex(e => new { e.MediaFileId, e.RoleName });
+    entity.HasIndex(e => new { e.UserId, e.AccessLevel });
+    
+    // Foreign key relationships
+    entity.HasOne(e => e.MediaFile)
+        .WithMany()
+        .HasForeignKey(e => e.MediaFileId)
+        .OnDelete(DeleteBehavior.Cascade);
+        
+    entity.HasOne(e => e.User)
+        .WithMany()
+        .HasForeignKey(e => e.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+        
+    entity.HasOne(e => e.GrantedByUser)
+        .WithMany()
+        .HasForeignKey(e => e.GrantedByUserId)
+        .OnDelete(DeleteBehavior.Restrict);
+});
+```
+
 ## Database Schema Overview
 
 ### Core Identity Tables
@@ -258,6 +413,8 @@ builder.Entity<RefreshToken>(entity =>
 - `InviteCodes` - Short-form invitation codes
 - `EmailInvites` - Email-based invitations
 - `RefreshTokens` - JWT refresh token storage
+- `MediaFiles` - File metadata and storage information
+- `MediaFileAccess` - File access permissions and audit trail
 
 ## Migration Strategy
 
@@ -340,6 +497,66 @@ var expiredTokens = await context.RefreshTokens
     .ToListAsync();
 ```
 
+### Media File Queries
+```csharp
+// User's files with pagination
+var userFiles = await context.MediaFiles
+    .Where(mf => mf.UploadedByUserId == userId && 
+                 mf.ProcessingStatus != MediaProcessingStatus.Deleted)
+    .OrderByDescending(mf => mf.CreatedAt)
+    .Skip((page - 1) * pageSize)
+    .Take(pageSize)
+    .ToListAsync();
+
+// Public files by category
+var publicImages = await context.MediaFiles
+    .Where(mf => mf.Visibility == MediaFileVisibility.Public && 
+                 mf.Category == MediaFileCategory.Image &&
+                 mf.ProcessingStatus == MediaProcessingStatus.Complete)
+    .OrderByDescending(mf => mf.CreatedAt)
+    .ToListAsync();
+
+// File access check
+var hasAccess = await context.MediaFiles
+    .AnyAsync(mf => mf.Id == fileId && 
+                   (mf.Visibility == MediaFileVisibility.Public ||
+                    mf.UploadedByUserId == userId ||
+                    (mf.Visibility == MediaFileVisibility.Shared && 
+                     mf.SharedWithRoles.Contains(userRole))));
+
+// Files by hash (deduplication)
+var existingFile = await context.MediaFiles
+    .FirstOrDefaultAsync(mf => mf.FileHash == fileHash &&
+                              mf.ProcessingStatus != MediaProcessingStatus.Deleted);
+
+// Files needing thumbnail processing
+var pendingThumbnails = await context.MediaFiles
+    .Where(mf => mf.Category == MediaFileCategory.Image &&
+                 mf.ProcessingStatus == MediaProcessingStatus.Pending &&
+                 !mf.HasThumbnail)
+    .Take(10)
+    .ToListAsync();
+```
+
+### File Access Queries
+```csharp
+// User's file permissions
+var userAccess = await context.MediaFileAccess
+    .Where(mfa => mfa.UserId == userId &&
+                  (mfa.ExpiresAt == null || mfa.ExpiresAt > DateTime.UtcNow))
+    .Include(mfa => mfa.MediaFile)
+    .ToListAsync();
+
+// Files shared with role
+var roleFiles = await context.MediaFiles
+    .Where(mf => mf.Visibility == MediaFileVisibility.Shared)
+    .Where(mf => mf.SharedRoles.Contains(roleName) ||
+                 context.MediaFileAccess.Any(mfa => mfa.MediaFileId == mf.Id &&
+                                                   mfa.RoleName == roleName &&
+                                                   (mfa.ExpiresAt == null || mfa.ExpiresAt > DateTime.UtcNow)))
+    .ToListAsync();
+```
+
 ## Performance Considerations
 
 ### Indexing Best Practices
@@ -374,6 +591,21 @@ public async Task CleanupOldDataAsync()
         .ToListAsync();
     
     context.InviteCodes.RemoveRange(expiredInvites);
+    
+    // Clean soft-deleted media files older than retention period
+    var deletedFiles = await context.MediaFiles
+        .Where(mf => mf.ProcessingStatus == MediaProcessingStatus.Deleted &&
+                     mf.LastModifiedAt < cutoffDate)
+        .ToListAsync();
+    
+    context.MediaFiles.RemoveRange(deletedFiles);
+    
+    // Clean expired file access grants
+    var expiredAccess = await context.MediaFileAccess
+        .Where(mfa => mfa.ExpiresAt.HasValue && mfa.ExpiresAt < DateTime.UtcNow)
+        .ToListAsync();
+    
+    context.MediaFileAccess.RemoveRange(expiredAccess);
     
     await context.SaveChangesAsync();
 }

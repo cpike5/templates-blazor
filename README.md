@@ -1,6 +1,6 @@
 # Blazor Server Template
 
-A comprehensive Blazor Server template for rapid prototyping with authentication, role-based navigation, invite systems, and advanced user management.
+A comprehensive Blazor Server template for rapid prototyping with authentication, role-based navigation, invite systems, file management, and advanced user management.
 
 **GitHub Repository**: https://github.com/cpike5/templates-blazor
 
@@ -11,6 +11,7 @@ A comprehensive Blazor Server template for rapid prototyping with authentication
 - **Role-based access control** with configurable roles and permissions
 - **Dynamic navigation system** from appsettings.json with role filtering
 - **Theme system** with server-side rendering and persistent preferences
+- **File management system** with secure upload, storage, and access control
 - **Invite-only registration** with codes and email invitations
 - **User activity tracking** and comprehensive audit logging
 - **Rate limiting** and API security middleware
@@ -221,6 +222,9 @@ Add Google OAuth credentials to `appsettings.json`:
 - **AdminRoleService** - Admin-specific role operations
 - **FirstTimeSetupService** - Handles initial application setup and seeding
 - **DataSeeder** - Seeds database with roles, admin user, and initial data
+- **MediaManagementService** - File upload, storage, and management with access control
+- **FileSecurityService** - File validation, security scanning, and access authorization
+- **LocalFileStorageService** - Local disk-based file storage with organized folder structure
 
 ## Tech Stack
 
@@ -280,6 +284,7 @@ Comprehensive documentation is available in the `/docs` folder:
 - **[012-navigation-service.md](docs/012-navigation-service.md)** - Navigation system configuration
 - **[013-theme-service.md](docs/013-theme-service.md)** - Theme system architecture and usage
 - **[020-invite-system.md](docs/020-invite-system.md)** - Comprehensive invite system guide
+- **[026-file-management-system.md](docs/026-file-management-system.md)** - Complete file management and media system guide
 
 ## Development vs Production
 

@@ -332,3 +332,16 @@ body {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+/* File Upload Animations */
+@keyframes pulse {
+    0% { border-color: #28a745; }
+    50% { border-color: #20c997; }
+    100% { border-color: #28a745; }
+}
+
+@keyframes bounce {
+    0%, 20%, 60%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    80% { transform: translateY(-5px); }
+}

@@ -6,6 +6,7 @@
         public AdministrationOptions Administration { get; set; } = new AdministrationOptions();
         public SetupOptions Setup { get; set; } = new SetupOptions();
         public SettingsOptions Settings { get; set; } = new SettingsOptions();
+        public FileManagementOptions FileManagement { get; set; } = new FileManagementOptions();
     }
     public class AdministrationOptions
     {
@@ -102,5 +103,49 @@
     {
         public bool Enabled { get; set; } = true;
         public int ExpirationMinutes { get; set; } = 30;
+    }
+
+    public class FileManagementOptions
+    {
+        public LocalStorageOptions LocalStorage { get; set; } = new();
+        public SecurityOptions Security { get; set; } = new();
+        public ProcessingOptions Processing { get; set; } = new();
+        public CacheOptions Cache { get; set; } = new();
+    }
+
+    public class LocalStorageOptions
+    {
+        public string RootPath { get; set; } = "App_Data/uploads";
+        public bool OrganizeByDate { get; set; } = true;
+        public long MaxStorageBytes { get; set; } = 10_737_418_240; // 10GB
+    }
+
+    public class SecurityOptions
+    {
+        public long MaxFileSizeBytes { get; set; } = 104_857_600; // 100MB
+        public string[] AllowedMimeTypes { get; set; } = {
+            "image/jpeg", "image/png", "image/gif", "image/webp",
+            "application/pdf", "text/plain", "application/zip"
+        };
+        public string[] AllowedExtensions { get; set; } = {
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".txt", ".zip"
+        };
+        public bool EnableVirusScanning { get; set; } = false;
+        public bool RequireAuthentication { get; set; } = true;
+    }
+
+    public class ProcessingOptions
+    {
+        public bool EnableThumbnailGeneration { get; set; } = true;
+        public int ThumbnailMaxWidth { get; set; } = 300;
+        public int ThumbnailMaxHeight { get; set; } = 300;
+        public int ThumbnailQuality { get; set; } = 85;
+    }
+
+    public class CacheOptions
+    {
+        public bool EnableFileMetadataCache { get; set; } = true;
+        public int MetadataCacheExpirationMinutes { get; set; } = 60;
+        public bool EnableThumbnailCache { get; set; } = true;
     }
 }

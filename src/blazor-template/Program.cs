@@ -42,6 +42,7 @@ namespace BlazorTemplate
             builder.Services.Configure<ConfigurationOptions>(builder.Configuration.GetSection(ConfigurationOptions.SectionName));
             builder.Services.AddNavigationServices(builder.Configuration);
             builder.Services.AddAdminServices();
+            builder.Services.AddFileManagementServices(builder.Configuration);
             builder.Services.AddScoped<ThemeService>();
             
             // Settings services
@@ -57,6 +58,7 @@ namespace BlazorTemplate
 
 
             // Add services to the container.
+            builder.Services.AddControllers(); // Add MVC controllers support
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
@@ -151,6 +153,9 @@ namespace BlazorTemplate
 
             // Add additional endpoints required by the Identity /Account Razor components.
             app.MapAdditionalIdentityEndpoints();
+            
+            // Add controller routing for media files
+            app.MapControllers();
 
             app.Run();
         }
