@@ -262,53 +262,141 @@
     <main class="lg:ml-64 pt-16 min-h-screen">
         <div class="p-6 lg:p-8">
             <!-- Hero Section -->
-            <div class="max-w-6xl mx-auto text-center py-12 lg:py-20">
-                <div class="mb-12">
-                    <div class="inline-flex items-center justify-center w-24 h-24 bg-primary rounded-2xl shadow-lg mb-8">
-                        <i class="fas fa-cube text-4xl text-white"></i>
-                    </div>
-                    <h1 class="text-4xl lg:text-5xl font-bold text-dark mb-4">Blazor Template</h1>
-                    <p class="text-xl text-gray-600">Modern Web Application Platform</p>
+            <div class="relative max-w-7xl mx-auto py-16 lg:py-24 overflow-hidden">
+                <!-- Background Elements -->
+                <div class="absolute inset-0 -z-10">
+                    <!-- Gradient Orbs -->
+                    <div class="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div class="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-info/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 4s;"></div>
+                    
+                    <!-- Grid Pattern -->
+                    <div class="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
                 </div>
                 
-                <p class="text-lg text-gray-700 max-w-3xl mx-auto mb-12">
-                    Experience the power of modern web development with our feature-rich Blazor application. 
-                    Built with cutting-edge technology, designed for performance, and crafted for an exceptional user experience.
-                </p>
-                
-                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                    <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg shadow-md transition-all hover:shadow-lg">
-                        <i class="fas fa-rocket mr-2"></i>
-                        Get Started
-                    </button>
-                    <button class="px-8 py-3 bg-white hover:bg-light text-dark font-semibold rounded-lg shadow-md border border-gray-200 transition-all hover:shadow-lg">
-                        <i class="fas fa-sign-in-alt mr-2"></i>
-                        Sign In
-                    </button>
-                </div>
-                
-                <!-- Feature Cards -->
-                <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    <div class="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
-                        <div class="absolute top-0 left-8 -translate-y-1/2">
-                            <div class="inline-flex items-center justify-center w-12 h-12 bg-warning rounded-xl shadow-lg">
-                                <i class="fas fa-bolt text-xl text-white"></i>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-semibold text-dark mb-3 mt-4">Lightning Fast</h3>
-                        <p class="text-gray-600 leading-relaxed">Built with Blazor Server for exceptional performance and real-time interactivity.</p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-warning/50 to-transparent rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="relative text-center px-6">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium mb-8 backdrop-blur-sm">
+                        <div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                        <span>Now Available</span>
+                        <i class="fas fa-sparkles text-xs"></i>
                     </div>
                     
-                    <div class="group relative bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
-                        <div class="absolute top-0 left-8 -translate-y-1/2">
-                            <div class="inline-flex items-center justify-center w-12 h-12 bg-success rounded-xl shadow-lg">
-                                <i class="fas fa-shield-alt text-xl text-white"></i>
+                    <!-- Main Heading -->
+                    <div class="mb-8">
+                        <h1 class="text-5xl lg:text-7xl font-bold text-dark mb-6 leading-tight">
+                            <span class="text-primary">
+                                Blazor
+                            </span>
+                            <br>
+                            <span class="text-dark">Template</span>
+                        </h1>
+                        <p class="text-xl lg:text-2xl text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
+                            Modern Web Application Platform for 
+                            <span class="font-semibold text-primary">Exceptional</span> User Experiences
+                        </p>
+                    </div>
+                    
+                    <!-- Description -->
+                    <p class="text-lg text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed">
+                        Experience the power of modern web development with our feature-rich Blazor application. 
+                        Built with cutting-edge technology, designed for performance, and crafted for productivity.
+                    </p>
+                    
+                    <!-- CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                        <button class="group px-8 py-4 bg-primary hover:bg-primary/90 text-white font-semibold rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-rocket"></i>
+                                <span>Get Started</span>
+                                <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
                             </div>
+                        </button>
+                        
+                        <button class="group px-8 py-4 bg-white/70 backdrop-blur-sm hover:bg-white border border-gray-200 hover:border-gray-300 text-dark font-semibold rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                                <span>View Demo</span>
+                                <i class="fas fa-play text-sm group-hover:scale-110 transition-transform"></i>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Stats or Social Proof -->
+                    <div class="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 mb-16">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-users text-primary"></i>
+                            <span>1,200+ developers</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-dark mb-3 mt-4">Secure & Reliable</h3>
-                        <p class="text-gray-600 leading-relaxed">Enterprise-grade security with ASP.NET Core Identity and robust authentication.</p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-success/50 to-transparent rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-star text-warning"></i>
+                            <span>4.9/5 rating</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-download text-success"></i>
+                            <span>50K+ downloads</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-shield-alt text-info"></i>
+                            <span>Enterprise ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                
+                <!-- Feature Highlights -->
+                <div class="max-w-6xl mx-auto px-6">
+                    <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+                        <div class="group relative bg-white/50 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:border-warning/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                            <div class="absolute -top-4 left-8">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-warning rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                                    <i class="fas fa-bolt text-2xl text-white"></i>
+                                </div>
+                            </div>
+                            <div class="pt-8">
+                                <h3 class="text-xl font-bold text-dark mb-4 group-hover:text-warning transition-colors">Lightning Fast</h3>
+                                <p class="text-gray-600 leading-relaxed mb-4">Built with Blazor Server for exceptional performance and real-time interactivity.</p>
+                                <div class="flex items-center gap-2 text-sm text-warning font-medium">
+                                    <span>Learn more</span>
+                                    <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 h-1 bg-warning rounded-b-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        
+                        <div class="group relative bg-white/50 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:border-success/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                            <div class="absolute -top-4 left-8">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-success rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                                    <i class="fas fa-shield-alt text-2xl text-white"></i>
+                                </div>
+                            </div>
+                            <div class="pt-8">
+                                <h3 class="text-xl font-bold text-dark mb-4 group-hover:text-success transition-colors">Secure & Reliable</h3>
+                                <p class="text-gray-600 leading-relaxed mb-4">Enterprise-grade security with ASP.NET Core Identity and robust authentication.</p>
+                                <div class="flex items-center gap-2 text-sm text-success font-medium">
+                                    <span>Learn more</span>
+                                    <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 h-1 bg-success rounded-b-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        
+                        <div class="group relative bg-white/50 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                            <div class="absolute -top-4 left-8">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                                    <i class="fas fa-code text-2xl text-white"></i>
+                                </div>
+                            </div>
+                            <div class="pt-8">
+                                <h3 class="text-xl font-bold text-dark mb-4 group-hover:text-primary transition-colors">Developer First</h3>
+                                <p class="text-gray-600 leading-relaxed mb-4">Clean architecture, comprehensive documentation, and modern development practices.</p>
+                                <div class="flex items-center gap-2 text-sm text-primary font-medium">
+                                    <span>Learn more</span>
+                                    <i class="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-b-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
                     </div>
                 </div>
             </div>
