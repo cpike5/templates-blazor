@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailwind CSS v3 with Custom Colors</title>
+    <link href="./dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold text-primary mb-4">Tailwind CSS v3 with Custom Colors</h1>
+        <p class="text-lg text-dark/80 mb-8">Showcasing the custom color palette integration with Tailwind CSS v3.</p>
+        
+        <!-- Color Palette Display -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-dark mb-4">Color Palette</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-primary p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Primary</p>
+                    <p class="text-sm">#593c63</p>
+                </div>
+                <div class="bg-secondary p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Secondary</p>
+                    <p class="text-sm">#ba4c44</p>
+                </div>
+                <div class="bg-info p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Info</p>
+                    <p class="text-sm">#d29238</p>
+                </div>
+                <div class="bg-success p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Success</p>
+                    <p class="text-sm">#1ea369</p>
+                </div>
+                <div class="bg-warning p-4 rounded-lg text-dark text-center">
+                    <p class="font-semibold">Warning</p>
+                    <p class="text-sm">#dccd1e</p>
+                </div>
+                <div class="bg-danger p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Danger</p>
+                    <p class="text-sm">#e8320e</p>
+                </div>
+                <div class="bg-dark p-4 rounded-lg text-white text-center">
+                    <p class="font-semibold">Dark</p>
+                    <p class="text-sm">#0c0100</p>
+                </div>
+                <div class="bg-light p-4 rounded-lg text-dark border border-gray-300 text-center">
+                    <p class="font-semibold">Light</p>
+                    <p class="text-sm">#e3e5eb</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sample Cards -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-dark mb-4">Sample Cards</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-primary">
+                    <h3 class="text-xl font-semibold text-primary mb-2">Primary Card</h3>
+                    <p class="text-dark/70">Example card with primary accent color.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-success">
+                    <h3 class="text-xl font-semibold text-success mb-2">Success Card</h3>
+                    <p class="text-dark/70">Example card with success accent color.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-info">
+                    <h3 class="text-xl font-semibold text-info mb-2">Info Card</h3>
+                    <p class="text-dark/70">Example card with info accent color.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Buttons -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-dark mb-4">Button Styles</h2>
+            <div class="flex flex-wrap gap-3">
+                <button class="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded transition">
+                    Primary
+                </button>
+                <button class="bg-secondary hover:bg-secondary/90 text-white font-bold py-2 px-4 rounded transition">
+                    Secondary
+                </button>
+                <button class="bg-success hover:bg-success/90 text-white font-bold py-2 px-4 rounded transition">
+                    Success
+                </button>
+                <button class="bg-info hover:bg-info/90 text-white font-bold py-2 px-4 rounded transition">
+                    Info
+                </button>
+                <button class="bg-warning hover:bg-warning/90 text-dark font-bold py-2 px-4 rounded transition">
+                    Warning
+                </button>
+                <button class="bg-danger hover:bg-danger/90 text-white font-bold py-2 px-4 rounded transition">
+                    Danger
+                </button>
+            </div>
+        </div>
+        
+        <!-- Alerts -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-dark mb-4">Alert Examples</h2>
+            <div class="space-y-3">
+                <div class="bg-primary/10 border border-primary text-primary p-4 rounded">
+                    <strong>Primary Alert:</strong> This is a primary alert message.
+                </div>
+                <div class="bg-success/10 border border-success text-success p-4 rounded">
+                    <strong>Success!</strong> Your operation completed successfully.
+                </div>
+                <div class="bg-warning/10 border border-warning text-warning p-4 rounded">
+                    <strong>Warning:</strong> Please review this important information.
+                </div>
+                <div class="bg-danger/10 border border-danger text-danger p-4 rounded">
+                    <strong>Error:</strong> Something went wrong. Please try again.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
