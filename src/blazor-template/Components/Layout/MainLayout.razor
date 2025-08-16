@@ -3,16 +3,61 @@
 @implements IDisposable
 @inject IToastService ToastService
 
-<div class="layout-wrapper">
+<style>
+    /* Custom scrollbar for sidebar */
+    .sidebar-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .sidebar-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+    }
+    .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Modern animations */
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @@keyframes slideIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .animate-fadeIn {
+        animation: fadeIn 0.2s ease-out;
+    }
+    
+    .animate-slideIn {
+        animation: slideIn 0.2s ease-out;
+    }
+    
+    /* Glassmorphism effect enhancement */
+    .glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+</style>
+
+<div class="bg-light">
     <TopNavbar />
     <SidebarNavigation />
     
-    <!-- Sidebar Overlay for Mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
     
-    <!-- Main Content Area -->
-    <main class="main-content">
-        @Body
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 min-h-screen">
+        <div class="p-6 lg:p-8">
+            @Body
+        </div>
     </main>
 </div>
 
@@ -27,12 +72,125 @@
 
 <script src="~/js/toast.js"></script>
 
+<script>
+    // Sidebar Toggle and User Dropdown
+    function initializeTailwindLayout() {
+        console.log('Initializing Tailwind layout...');
+        
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        if (sidebarToggle && sidebar && sidebarOverlay) {
+            console.log('Setting up sidebar toggle...');
+            // Remove existing listeners to prevent duplicates
+            sidebarToggle.replaceWith(sidebarToggle.cloneNode(true));
+            const newSidebarToggle = document.getElementById('sidebarToggle');
+            
+            newSidebarToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Sidebar toggle clicked');
+                sidebar.classList.toggle('-translate-x-full');
+                sidebarOverlay.classList.toggle('hidden');
+            });
+            
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+            });
+        }
+        
+        // User Dropdown
+        const userDropdown = document.getElementById('userDropdown');
+        const userMenu = document.getElementById('userMenu');
+        
+        if (userDropdown && userMenu) {
+            console.log('Setting up user dropdown...');
+            // Remove existing listeners to prevent duplicates
+            userDropdown.replaceWith(userDropdown.cloneNode(true));
+            const newUserDropdown = document.getElementById('userDropdown');
+            
+            newUserDropdown.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('User dropdown clicked, current state:', userMenu.classList.contains('hidden'));
+                
+                if (userMenu.classList.contains('hidden')) {
+                    userMenu.classList.remove('hidden');
+                    userMenu.classList.add('animate-fadeIn');
+                    setTimeout(() => userMenu.classList.remove('animate-fadeIn'), 200);
+                } else {
+                    userMenu.classList.add('hidden');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!newUserDropdown.contains(e.target) && !userMenu.contains(e.target)) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+        } else {
+            console.log('User dropdown elements not found:', { userDropdown: !!userDropdown, userMenu: !!userMenu });
+        }
+        
+        // Add animation to nav items
+        document.querySelectorAll('.nav-item').forEach((item, index) => {
+            item.style.animationDelay = `${index * 50}ms`;
+            item.classList.add('animate-slideIn');
+        });
+    }
+    
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing...');
+        setTimeout(initializeTailwindLayout, 100);
+    });
+    
+    // Also initialize after Blazor renders (for dynamic content)
+    window.blazorLayoutInit = function() {
+        console.log('Blazor layout init called...');
+        setTimeout(initializeTailwindLayout, 100);
+    };
+    
+    // Initialize on window load as fallback
+    window.addEventListener('load', function() {
+        console.log('Window loaded, initializing...');
+        setTimeout(initializeTailwindLayout, 200);
+    });
+</script>
+
 @code {
     private BlazorTemplate.Components.Shared.ToastNotification? toastComponent;
 
     protected override void OnInitialized()
     {
         ToastService.OnToastRequested += HandleToastRequested;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize JavaScript for Tailwind layout
+            await Task.Delay(200); // Small delay to ensure DOM is ready
+            await InvokeAsync(async () =>
+            {
+                try
+                {
+                    // Call the JavaScript initialization function
+                    await Task.Run(() =>
+                    {
+                        // The JavaScript will initialize on its own, but we can trigger it
+                        StateHasChanged();
+                    });
+                }
+                catch (Exception)
+                {
+                    // Handle any JavaScript interop errors gracefully
+                }
+            });
+        }
     }
 
     private void HandleToastRequested(ToastMessage toastMessage)

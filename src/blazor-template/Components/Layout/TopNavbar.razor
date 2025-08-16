@@ -1,61 +1,140 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @using BlazorTemplate.Data
 @using BlazorTemplate.Services.Auth
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IUserRoleService RoleService
 @inject IConfiguration Configuration 
+@inject NavigationManager Navigation
 
 <!-- Top Navigation Bar -->
-<nav class="top-navbar">
-    <button class="sidebar-toggle" id="sidebarToggle" type="button">
-        <i class="fas fa-bars"></i>
+<nav class="fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-b border-gray-200/50 z-50 flex items-center px-6 shadow-sm">
+    <!-- Sidebar Toggle -->
+    <button id="sidebarToggle" class="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-all duration-200 mr-4 lg:hidden hover:shadow-sm">
+        <i class="fas fa-bars text-dark text-lg"></i>
     </button>
-
-    <a href="/" class="app-brand">
-        <i class="fas fa-cube"></i>
-        <span>@AppName</span>
+    
+    <!-- App Brand -->
+    <a href="/" class="flex items-center gap-3 text-primary hover:text-secondary transition-all duration-200 group">
+        <div class="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+            <i class="fas fa-cube text-xl"></i>
+        </div>
+        <span class="text-xl font-bold">@AppName</span>
     </a>
-
-    <div class="nav-actions">
-    </div>
-
-    <div class="user-info">
-        @if (isAuthenticated)
+    
+    <!-- Center Spacer -->
+    <div class="flex-1"></div>
+    
+    <!-- User Section -->
+    <div class="flex items-center gap-2">
+        @if (!isAuthenticated)
         {
-            <div class="user-profile dropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <div class="user-avatar">@GetUserInitials()</div>
-                <div class="user-details">
-                    <div class="user-name">@GetDisplayName()</div>
-                    <div class="user-role">@GetPrimaryRole()</div>
-                </div>
-                <i class="fas fa-chevron-down ms-2" style="font-size: 0.75rem; color: #6c757d;"></i>
+            <!-- Login/Register for non-authenticated users -->
+            <div class="flex items-center gap-2">
+                <a href="/Account/Login" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary rounded-lg hover:bg-gray-50 transition-colors">
+                    Sign In
+                </a>
+                <a href="/Account/Register" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors">
+                    Get Started
+                </a>
             </div>
-
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/Account/Manage"><i class="fas fa-user me-2"></i>My Profile</a></li>
-                <li><a class="dropdown-item" href="/Account/Manage/Email"><i class="fas fa-envelope me-2"></i>Email Settings</a></li>
-                <li><a class="dropdown-item" href="/Account/Manage/ChangePassword"><i class="fas fa-key me-2"></i>Change Password</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <form action="/Account/Logout" method="post" class="d-inline">
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="dropdown-item">
-                            <i class="fas fa-sign-out-alt me-2"></i>Sign Out
-                        </button>
-                    </form>
-                </li>
-            </ul>
         }
         else
         {
-            <div class="auth-links">
-                <a href="/Account/Login" class="btn btn-outline-primary btn-sm me-2">
-                    <i class="fas fa-sign-in-alt me-1"></i>Login
-                </a>
-                <a href="/Account/Register" class="btn btn-primary btn-sm">
-                    <i class="fas fa-user-plus me-1"></i>Register
-                </a>
+            <!-- Search (optional) -->
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-all duration-200 hidden lg:flex hover:shadow-sm">
+                <i class="fas fa-search text-gray-600 text-sm"></i>
+            </button>
+            
+            <!-- Notifications -->
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-all duration-200 relative hidden md:flex hover:shadow-sm group">
+                <i class="fas fa-bell text-gray-600 text-sm group-hover:text-dark transition-colors"></i>
+                <span class="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full animate-pulse"></span>
+                <span class="absolute top-1.5 right-1.5 w-3 h-3 bg-danger/30 rounded-full animate-ping"></span>
+            </button>
+            
+            <!-- Theme Toggle -->
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-all duration-200 hidden md:flex hover:shadow-sm group">
+                <i class="fas fa-moon text-gray-600 text-sm group-hover:text-dark transition-colors"></i>
+            </button>
+            
+            <!-- Divider -->
+            <div class="w-px h-6 bg-gray-200 mx-2 hidden md:block"></div>
+            
+            <!-- User Profile Dropdown -->
+            <div class="relative">
+                <button id="userDropdown" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200 hover:shadow-sm group">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+                            @GetUserInitials()
+                        </div>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success border-2 border-white rounded-full"></div>
+                    </div>
+                    <div class="hidden md:flex flex-col items-start">
+                        <span class="text-sm font-semibold text-dark group-hover:text-primary transition-colors">@GetDisplayName()</span>
+                        <span class="text-xs text-gray-500">@GetPrimaryRole()</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs text-gray-400 hidden md:block group-hover:text-gray-600 transition-colors"></i>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="userMenu" class="hidden absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 py-3 animate-in slide-in-from-top-2 duration-200">
+                    <!-- User Info Header -->
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-semibold">
+                                @GetUserInitials()
+                            </div>
+                            <div>
+                                <p class="font-semibold text-dark">@GetDisplayName()</p>
+                                <p class="text-xs text-gray-500">@userEmail</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Menu Items -->
+                    <div class="py-2">
+                        <a href="/Account/Manage" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors group">
+                            <div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg group-hover:bg-primary/10 transition-colors">
+                                <i class="fas fa-user text-xs text-gray-600 group-hover:text-primary"></i>
+                            </div>
+                            <span class="font-medium">My Profile</span>
+                        </a>
+                        <a href="/Account/Manage/Email" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors group">
+                            <div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg group-hover:bg-primary/10 transition-colors">
+                                <i class="fas fa-envelope text-xs text-gray-600 group-hover:text-primary"></i>
+                            </div>
+                            <span class="font-medium">Email Settings</span>
+                        </a>
+                        <a href="/Account/Manage/ChangePassword" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors group">
+                            <div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg group-hover:bg-primary/10 transition-colors">
+                                <i class="fas fa-key text-xs text-gray-600 group-hover:text-primary"></i>
+                            </div>
+                            <span class="font-medium">Change Password</span>
+                        </a>
+                        <a href="/Account/Manage" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors group">
+                            <div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg group-hover:bg-primary/10 transition-colors">
+                                <i class="fas fa-cog text-xs text-gray-600 group-hover:text-primary"></i>
+                            </div>
+                            <span class="font-medium">Settings</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-2"></div>
+                    
+                    <!-- Sign Out -->
+                    <form action="/Account/Logout" method="post" class="inline">
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger hover:bg-danger/5 transition-colors group mx-2 rounded-lg">
+                            <div class="flex items-center justify-center w-8 h-8 bg-danger/10 rounded-lg group-hover:bg-danger/20 transition-colors">
+                                <i class="fas fa-sign-out-alt text-xs text-danger"></i>
+                            </div>
+                            <span class="font-medium">Sign Out</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         }
     </div>
@@ -163,5 +242,3 @@
         return userRoles.FirstOrDefault() ?? "User";
     }
 }
-
-@inject NavigationManager Navigation
